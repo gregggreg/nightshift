@@ -5,88 +5,94 @@ title: Scheduling
 
 # Scheduling
 
-Nightshift can run automatically on a schedule or be triggered manually when you want immediate execution.
+Configure exactly one schedule, then run the daemon to execute Nightshift automatically. A schedule uses either a five-field cron expression or a Go duration interval; setting both is invalid.
 
-## Schedule Configuration
+## Cron or interval
 
-Use cron or interval scheduling. Nightshift rejects configs that set both.
+Use cron when work should start at a calendar time. Nightshift accepts five fields: minute, hour, day of month, month, and day of week.
 
 ```yaml
 schedule:
-  cron: "0 2 * * *"  # Every night at 2am
-  # interval: "8h"   # Or run every 8 hours
+  cron: "0 2 * * *" # Every day at 2:00 AM
+```
+
+Use an interval when work should recur relative to the last scheduled run:
+
+```yaml
+schedule:
+  interval: "8h"
+```
+
+Intervals use Go duration syntax, for example `30m`, `1h`, or `24h`, and must be positive. The interval scheduler's first run is one interval after it starts; neither scheduling mode runs immediately on daemon startup.
+
+## Execution windows
+
+An optional window restricts jobs to a time range. The start is inclusive and the end is exclusive. Windows may cross midnight.
+
+```yaml
+schedule:
+  cron: "0 * * * *"
   window:
     start: "22:00"
     end: "06:00"
-    timezone: "America/Denver"
-  max_projects: 1
-  max_tasks: 1
+    timezone: "America/Los_Angeles"
 ```
 
-- `cron` schedules a specific time.
-- `interval` repeats runs after a fixed duration.
-- `window` restricts execution to a local time range.
-- `max_projects` and `max_tasks` provide defaults for scheduled and manual runs when CLI flags are omitted.
+In this example, Nightshift runs hourly from 22:00 through 05:00 in the specified timezone. If `timezone` is omitted, the daemon's local timezone is used. `start` and `end` must be `HH:MM` values with hours from 0–23 and minutes from 0–59.
 
-If you want to bootstrap a schedule from scratch, run `nightshift setup` for the guided path, or `nightshift init` / `nightshift init --global` for a manual path. After editing the schedule, run `nightshift config validate`.
+For cron schedules, an occurrence outside the window is skipped; the next cron occurrence is evaluated normally. For interval schedules, the next interval that falls outside the window is moved to the next window start.
 
-## Daemon Mode
+## Per-run limits
 
-Run Nightshift as a persistent background process:
+The `schedule` section also supplies defaults for manual `nightshift run` invocations when its matching flag was not explicitly passed:
+
+```yaml
+schedule:
+  cron: "0 2 * * *"
+  max_projects: 3
+  max_tasks: 2
+```
+
+- `max_projects` limits eligible projects per `nightshift run`; `0` leaves the command's default of one project in effect.
+- `max_tasks` limits selected tasks per project; `0` leaves the command's default of one task in effect.
+- An explicit `nightshift run --max-projects` or `--max-tasks` flag overrides the corresponding configuration value. `--project` ignores the project limit and `--task` ignores the task limit.
+
+The current daemon loop does not read these two limits: it processes configured projects and selects up to five tasks for each eligible project. Use `nightshift run` when you need these particular limits enforced.
+
+## Daemon lifecycle
+
+The daemon requires either `schedule.cron` or `schedule.interval`.
 
 ```bash
 nightshift daemon start
-nightshift daemon start --foreground  # For debugging
-nightshift daemon start --timeout 45m
 nightshift daemon status
 nightshift daemon stop
 ```
 
-`nightshift daemon start` backgrounds the scheduler by default. `--foreground` keeps it in the current terminal, and `--timeout` defaults to 30m if you do not override it. The daemon requires a configured schedule. It writes its PID file to `~/.local/share/nightshift/nightshift.pid` and uses the scheduler loop to launch runs on schedule.
-
-## Service Lifecycle
-
-Install Nightshift as a system service for automatic startup:
+`nightshift daemon start` detaches into the background. Use `--foreground` to keep it attached for debugging, or `--timeout 45m` to set the per-agent execution timeout:
 
 ```bash
-# Auto-detect the init system
-nightshift install
-
-# macOS (launchd)
-nightshift install launchd
-
-# Linux (systemd)
-nightshift install systemd
-
-# Universal (cron)
-nightshift install cron
-
-# Remove the installed service
-nightshift uninstall
+nightshift daemon start --foreground --timeout 45m
 ```
 
-- `nightshift install` auto-detects the platform when you do not pass an init system.
-- `launchd` targets macOS, `systemd` targets Linux, and `cron` works everywhere.
-- `nightshift uninstall` removes the matching launchd, systemd, or cron entry if one is installed.
+The daemon writes its PID to `~/.local/share/nightshift/nightshift.pid`. `status` reports the process, configured schedule, and window. `stop` sends `SIGTERM` and waits up to ten seconds before force-stopping a process that has not exited. The daemon also handles `SIGINT` and `SIGTERM` for graceful scheduler shutdown.
 
-## Manual Runs
+## Preview and manual runs
 
-Skip the scheduler and run immediately:
+Preview upcoming work without starting a daemon:
 
 ```bash
-nightshift run                          # Preflight summary + confirm + execute
-nightshift run --dry-run                # Show preflight summary and exit
-nightshift run --yes                    # Skip confirmation prompt
-nightshift run --project ~/code/myproject
-nightshift run --task lint-fix
-nightshift run --max-projects 3 --max-tasks 2  # Process more projects/tasks
-nightshift run --random-task            # Pick a random eligible task
-nightshift run --ignore-budget          # Bypass budget limits
-nightshift run --branch develop         # Base new branches on develop
-nightshift run --timeout 45m            # Increase per-agent timeout
-nightshift run --no-color               # Disable ANSI colors
+nightshift preview
+nightshift preview -n 3
+nightshift preview --explain
 ```
 
-`nightshift run` shows a preflight summary before executing. In interactive terminals you get a confirmation prompt; `--yes` skips it. Non-TTY contexts such as cron, daemons, and CI skip confirmation automatically.
+To run once without waiting for the schedule:
 
-`--random-task` is mutually exclusive with `--task`. When `--max-projects` or `--max-tasks` is omitted, Nightshift falls back to the values in `schedule.max_projects` and `schedule.max_tasks`. `--branch` defaults to the current branch, and `--timeout` defaults to 30m.
+```bash
+nightshift run --dry-run
+nightshift run --yes
+nightshift run --max-projects 3 --max-tasks 2
+```
+
+In an interactive terminal, `nightshift run` shows a preflight summary and asks for confirmation. Non-interactive runs, including daemon runs, skip that prompt automatically. See [Configuration](/docs/configuration) for the complete YAML layout and [CLI Reference](/docs/cli-reference) for command options.
