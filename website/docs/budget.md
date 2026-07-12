@@ -26,7 +26,7 @@ These settings belong under the top-level `budget` key.
 | `mode` | `daily` | Allowance model: `daily` or `weekly`. |
 | `max_percent` | `75` | Percentage of the available budget that one Nightshift run may use. Valid values are 1–100. |
 | `reserve_percent` | `5` | Percentage held back after the allowance calculation. Valid values are 0–100. |
-| `aggressive_end_of_week` | `false` | In weekly mode, increases the allowance when two or fewer days remain. |
+| `aggressive_end_of_week` | `false` | In weekly mode, doubles the allowance with one day remaining before reset. |
 | `weekly_tokens` | `700000` | Default weekly token budget when there is no provider-specific value or usable calibration. |
 | `per_provider` | unset | Weekly token overrides keyed by `claude`, `codex`, or `copilot`. |
 | `billing_mode` | `subscription` | `subscription` enables optional calibration; `api` uses configured token limits. |
