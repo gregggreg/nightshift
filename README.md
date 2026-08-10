@@ -258,20 +258,35 @@ Each task has a default cooldown interval to prevent the same task from running 
 
 ## Development
 
-### Pre-commit hooks
+### Git hooks
 
-Install the git pre-commit hook to catch formatting and vet issues before pushing:
+Install the git hooks to catch formatting, vet, and commit message issues before pushing:
 
 ```bash
 make install-hooks
 ```
 
-This symlinks `scripts/pre-commit.sh` into `.git/hooks/pre-commit`. The hook runs:
+This symlinks `scripts/pre-commit.sh` into `.git/hooks/pre-commit` and
+`scripts/commit-msg.sh` into `.git/hooks/commit-msg`. The pre-commit hook runs:
 - **gofmt** — flags any staged `.go` files that need formatting
 - **go vet** — catches common correctness issues
 - **go build** — ensures the project compiles
 
+The commit-msg hook normalizes the commit message and checks it against the
+standard.
+
 To bypass in a pinch: `git commit --no-verify`
+
+### Commit messages
+
+Nightshift uses Conventional Commits (`type(scope): subject`). See
+[docs/commit-messages.md](docs/commit-messages.md) for the full standard, and
+[CONTRIBUTING.md](CONTRIBUTING.md) for how to contribute.
+
+```bash
+make commit-lint                      # check origin/main..HEAD
+make commit-lint RANGE=HEAD~20..HEAD  # check any range
+```
 
 ## Uninstalling
 
