@@ -60,7 +60,9 @@ var (
 	// looseColonRe matches anything that at least looks like it is trying to be
 	// a conventional subject, so we can produce a targeted error.
 	looseColonRe = regexp.MustCompile(`^([A-Za-z]+)(\(([^()]*)\))?(!)?:(.*)$`)
-	// trailerRe matches a single trailer line, e.g. "Nightshift-Task: foo".
+	// trailerRe matches a line shaped like a trailer, e.g. "Nightshift-Task: foo".
+	// Matching the shape is not enough to call a line a trailer: ordinary prose
+	// produces lines like "Before: 2.1s." too. See isTrailerLine.
 	trailerRe = regexp.MustCompile(`^([A-Za-z][A-Za-z0-9-]*|BREAKING CHANGE): .+$`)
 	// scissorsRe matches git's --verbose cut line; everything below it is a diff.
 	scissorsRe = regexp.MustCompile(`^#* *-+ >8 -+`)
@@ -71,6 +73,64 @@ var (
 	// mergeRe matches git's default merge subject.
 	mergeRe = regexp.MustCompile(`^Merge `)
 )
+
+// knownTrailerKeys are the trailer keys this project recognizes by name,
+// lowercased for case-insensitive lookup. A trailing block is only treated as a
+// trailer block when at least one of its lines uses one of these keys, which is
+// what keeps a body paragraph ending in "Note: …" or "Before: 2.1s." from being
+// mistaken for trailers. Keys containing a hyphen ("Reviewed-by") are also
+// accepted inside a block anchored by a known key, since prose never has that
+// shape; see isTrailerLine.
+var knownTrailerKeys = map[string]bool{
+	"acked-by":        true,
+	"breaking change": true,
+	"bug":             true,
+	"cc":              true,
+	"change-id":       true,
+	"closes":          true,
+	"co-authored-by":  true,
+	"fixes":           true,
+	"helped-by":       true,
+	"link":            true,
+	"reported-by":     true,
+	"resolves":        true,
+	"reviewed-by":     true,
+	"refs":            true,
+	"signed-off-by":   true,
+	"suggested-by":    true,
+	"tested-by":       true,
+}
+
+// trailerKey returns the key of a trailer-shaped line, lowercased, and whether
+// the line is trailer-shaped at all.
+func trailerKey(line string) (string, bool) {
+	m := trailerRe.FindStringSubmatch(line)
+	if m == nil {
+		return "", false
+	}
+	return strings.ToLower(m[1]), true
+}
+
+// isKnownTrailer reports whether the line names a trailer key this project
+// recognizes, or a Nightshift-* trailer.
+func isKnownTrailer(line string) bool {
+	key, ok := trailerKey(line)
+	if !ok {
+		return false
+	}
+	return knownTrailerKeys[key] || strings.HasPrefix(key, "nightshift-")
+}
+
+// isTrailerLine reports whether the line may appear inside a trailer block. A
+// hyphenated key is accepted on shape alone; a single-word key must be one we
+// know, so prose such as "Note: be careful" is not swallowed.
+func isTrailerLine(line string) bool {
+	key, ok := trailerKey(line)
+	if !ok {
+		return false
+	}
+	return strings.Contains(key, "-") || knownTrailerKeys[key]
+}
 
 // Issue is a single lint violation.
 type Issue struct {
@@ -262,33 +322,36 @@ func lowerFirstWord(desc string) string {
 
 // trailerStart returns the index of the first line of the trailing trailer
 // block, or -1 when the message has no trailer block. The trailer block is the
-// longest run of trailer (and continuation) lines at the end of the message.
-// The subject line is never treated as a trailer, even though it looks like
-// one.
+// longest run of trailer (and continuation) lines at the end of the message,
+// and it only counts as one when at least one of those lines uses a key we
+// recognize. Requiring a known key is what stops a body paragraph whose last
+// lines happen to read "Before: 2.1s." from being treated as trailers and split
+// off with a blank line. The subject line is never treated as a trailer, even
+// though it looks like one.
 func trailerStart(lines []string) int {
 	end := len(lines)
 	for end > 0 && lines[end-1] == "" {
 		end--
 	}
 	start := end
-	sawTrailer := false
+	sawKnown := false
 	for start > 1 && lines[start-1] != "" {
 		line := lines[start-1]
 		switch {
-		case trailerRe.MatchString(line):
-			sawTrailer = true
+		case isTrailerLine(line):
+			sawKnown = sawKnown || isKnownTrailer(line)
 		case strings.HasPrefix(line, " ") || strings.HasPrefix(line, "\t"):
 			// continuation of the trailer above it
 		default:
 			// A non-trailer line ends the block.
-			if sawTrailer {
+			if sawKnown {
 				return start
 			}
 			return -1
 		}
 		start--
 	}
-	if !sawTrailer || start == 0 {
+	if !sawKnown || start == 0 {
 		return -1
 	}
 	return start

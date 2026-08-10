@@ -87,6 +87,31 @@ func TestNormalize(t *testing.T) {
 				"Co-Authored-By: Someone <someone@example.com>\n",
 		},
 		{
+			name: "does not split a paragraph whose last lines look like trailers",
+			in: "fix: speed up parsing\n\n" +
+				"The parser rescanned the buffer on every token.\n" +
+				"Before: 2.1s on the fixture corpus.\n" +
+				"After: 0.3s.\n",
+			want: "fix: speed up parsing\n\n" +
+				"The parser rescanned the buffer on every token.\n" +
+				"Before: 2.1s on the fixture corpus.\n" +
+				"After: 0.3s.\n",
+		},
+		{
+			name: "does not treat a closing prose line as a trailer",
+			in:   "docs: describe the hook\n\nInstall it with make hooks.\nNote: it is opt-in.\n",
+			want: "docs: describe the hook\n\nInstall it with make hooks.\nNote: it is opt-in.\n",
+		},
+		{
+			name: "keeps an unknown-key trailer with the block it belongs to",
+			in: "chore: record the review\n\nbody text\n" +
+				"Reviewed-by: Someone <someone@example.com>\n" +
+				"Co-Authored-By: Someone Else <else@example.com>\n",
+			want: "chore: record the review\n\nbody text\n\n" +
+				"Reviewed-by: Someone <someone@example.com>\n" +
+				"Co-Authored-By: Someone Else <else@example.com>\n",
+		},
+		{
 			name: "leaves fenced code untouched",
 			in:   "docs: show the hook output\n\n```\n\n  spaced   out\n\n```\n",
 			want: "docs: show the hook output\n\n```\n\n  spaced   out\n\n```\n",
@@ -213,6 +238,17 @@ func TestTrailersAreNotLengthChecked(t *testing.T) {
 	}
 	if got := Normalize(msg); got != msg {
 		t.Fatalf("trailers must survive normalization: %q", got)
+	}
+}
+
+// A prose line that merely looks like a trailer must not inherit the trailer
+// block's exemption from the width limit.
+func TestProseLooksLikeTrailerIsStillWidthChecked(t *testing.T) {
+	long := "Note: " + strings.TrimSpace(strings.Repeat("word ", 30))
+	msg := "fix: a thing\n\nsome body text\n" + long + "\n"
+	issues := Lint(msg)
+	if len(issues) != 1 || issues[0].Rule != "body-line-too-long" {
+		t.Fatalf("expected body-line-too-long for a long %q line, got %v", "Note:", issues)
 	}
 }
 

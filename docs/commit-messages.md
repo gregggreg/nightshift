@@ -66,15 +66,21 @@ limit.
 
 ## Trailers
 
-The final block of `Key: value` lines is a trailer block. It is never rewritten,
-reflowed, or width-checked. Nightshift-generated commits carry:
+The final block of `Key: value` lines is a trailer block, and only when at least
+one of its keys is one git and this project recognize — `Co-Authored-By`,
+`Signed-off-by`, `Reviewed-by`, `Refs`, `Fixes`, `Closes`, `BREAKING CHANGE`,
+`Nightshift-*` and friends. A paragraph that merely ends in a line like
+`Before: 2.1s.` or `Note: this is opt-in` is prose, and is left exactly where the
+author put it. A trailer block is never rewritten, reflowed, or width-checked;
+prose always is. Nightshift-generated commits carry:
 
 ```
 Nightshift-Task: commit-normalize
 Nightshift-Ref: https://github.com/marcus/nightshift
 ```
 
-`Co-Authored-By:`, `Signed-off-by:`, `Refs:` and friends work the same way.
+Once a block is anchored by a recognized key, any hyphenated key beside it
+(`Reviewed-by:`, `Reported-by:`) is kept with the block.
 
 ## Exemptions
 
