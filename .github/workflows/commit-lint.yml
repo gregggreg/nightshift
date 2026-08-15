@@ -1,0 +1,45 @@
+name: Commit Lint
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  commit-messages:
+    name: Commit messages
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate commit messages in this pull request
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -eu
+          failed=0
+          commits=$(git rev-list "$BASE_SHA".."$HEAD_SHA")
+          if [ -z "$commits" ]; then
+            echo "No commits to check."
+            exit 0
+          fi
+          for sha in $commits; do
+            if git log -1 --format=%B "$sha" | scripts/validate-commit-msg.sh -; then
+              echo "✓ $(git log -1 --format='%h %s' "$sha")"
+            else
+              echo "  ↳ in commit $(git log -1 --format='%h' "$sha")"
+              failed=$((failed + 1))
+            fi
+          done
+          echo ""
+          if [ "$failed" -gt 0 ]; then
+            echo "❌ $failed commit message(s) do not follow docs/commit-messages.md"
+            exit 1
+          fi
+          echo "✅ all commit messages conform"
+
+      - name: Run the commit message hook tests
+        run: make test-commit-msg
