@@ -258,20 +258,33 @@ Each task has a default cooldown interval to prevent the same task from running 
 
 ## Development
 
-### Pre-commit hooks
+### Git hooks
 
-Install the git pre-commit hook to catch formatting and vet issues before pushing:
+Install the git hooks to catch formatting, vet, and commit message issues before pushing:
 
 ```bash
-make install-hooks
+make install-hooks    # install
+make uninstall-hooks  # remove
 ```
 
-This symlinks `scripts/pre-commit.sh` into `.git/hooks/pre-commit`. The hook runs:
+This symlinks `scripts/pre-commit.sh` into `.git/hooks/pre-commit` and
+`scripts/commit-msg.sh` into `.git/hooks/commit-msg`.
+
+The pre-commit hook runs:
 - **gofmt** — flags any staged `.go` files that need formatting
 - **go vet** — catches common correctness issues
 - **go build** — ensures the project compiles
 
+The commit-msg hook normalizes the commit message toward
+[Conventional Commits](docs/commit-messages.md) and rejects what it cannot
+safely fix. The same rules are checked in CI for every commit in a pull request.
+
 To bypass in a pinch: `git commit --no-verify`
+
+### Commit messages
+
+Commit subjects follow `type(scope): description` — see
+[docs/commit-messages.md](docs/commit-messages.md) and [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Uninstalling
 
