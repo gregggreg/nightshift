@@ -1,4 +1,4 @@
-.PHONY: build test test-verbose test-race coverage coverage-html lint clean deps check install calibrate-providers install-hooks help
+.PHONY: build test test-verbose test-race test-commit-msg coverage coverage-html lint clean deps check install calibrate-providers install-hooks uninstall-hooks help
 
 # Binary name
 BINARY=nightshift
@@ -29,6 +29,10 @@ test-verbose:
 test-race:
 	go test -race ./...
 
+# Run the commit message normalizer/validator shell tests
+test-commit-msg:
+	@sh scripts/tests/commit-msg.test.sh
+
 # Run tests with coverage report
 coverage:
 	go test -coverprofile=coverage.out ./...
@@ -58,7 +62,7 @@ deps:
 	go mod tidy
 
 # Run all checks (test + lint)
-check: test lint
+check: test test-commit-msg lint
 
 # Show help
 help:
@@ -67,6 +71,7 @@ help:
 	@echo "  test          - Run all tests"
 	@echo "  test-verbose  - Run tests with verbose output"
 	@echo "  test-race     - Run tests with race detection"
+	@echo "  test-commit-msg - Run the commit message hook tests"
 	@echo "  coverage      - Run tests with coverage report"
 	@echo "  coverage-html - Generate HTML coverage report"
 	@echo "  lint          - Run golangci-lint"
@@ -75,10 +80,18 @@ help:
 	@echo "  check         - Run tests and lint"
 	@echo "  install       - Build and install to Go bin directory"
 	@echo "  calibrate-providers - Compare local Claude/Codex session usage for calibration"
-	@echo "  install-hooks  - Install git pre-commit hook"
+	@echo "  install-hooks  - Install git pre-commit and commit-msg hooks"
+	@echo "  uninstall-hooks - Remove the hooks installed by install-hooks"
 	@echo "  help          - Show this help"
 
-# Install git pre-commit hook
+# Install git hooks. Opt-in: nothing installs these for you.
 install-hooks:
 	@ln -sf ../../scripts/pre-commit.sh .git/hooks/pre-commit
 	@echo "✓ pre-commit hook installed (.git/hooks/pre-commit → scripts/pre-commit.sh)"
+	@ln -sf ../../scripts/commit-msg.sh .git/hooks/commit-msg
+	@echo "✓ commit-msg hook installed (.git/hooks/commit-msg → scripts/commit-msg.sh)"
+
+# Remove the hooks installed by install-hooks
+uninstall-hooks:
+	@rm -f .git/hooks/pre-commit .git/hooks/commit-msg
+	@echo "✓ pre-commit and commit-msg hooks removed"
