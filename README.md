@@ -301,6 +301,38 @@ Each task has a default cooldown interval to prevent the same task from running 
 
 ## Development
 
+Nightshift is a Go module. Clone the repo and pull dependencies:
+
+```bash
+git clone https://github.com/marcus/nightshift.git
+cd nightshift
+make deps
+```
+
+### Building and testing
+
+Common targets in the `Makefile` (run `make help` for the full list):
+
+```bash
+make build         # build ./cmd/nightshift into ./nightshift
+make test          # go test ./...
+make test-race     # go test -race ./...
+make coverage      # test with a coverage profile, printed per function
+make lint          # golangci-lint run (requires golangci-lint on PATH)
+make check         # test + lint
+make clean         # remove the binary and coverage artifacts
+```
+
+`make install` installs the binary into your Go bin directory. `make coverage-html` writes `coverage.html` from the coverage profile.
+
+To compare local Claude and Codex session token usage for budget calibration:
+
+```bash
+make calibrate-providers
+```
+
+This runs `cmd/provider-calibration` against the current repo. See [Provider Calibration Guide](docs/guides/provider-calibration.md) for the flags and how to read the output.
+
 ### Pre-commit hooks
 
 Install the git pre-commit hook to catch formatting and vet issues before pushing:

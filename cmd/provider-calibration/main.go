@@ -1,3 +1,15 @@
+// Package main is the CLI entry point for provider-calibration, a helper that
+// compares locally recorded Claude and Codex session usage so token-cost
+// assumptions can be re-checked.
+//
+// It reads Codex session files (--codex-sessions) and Claude project files
+// (--claude-projects), optionally filtered by repo path (--repo), Codex
+// originator (--codex-originator), and a minimum user-turn count
+// (--min-user-turns). It reports per-session and per-user-turn token
+// distributions for each provider, the cross-provider ratios, and a suggested
+// multiplier, either as a human-readable report or as JSON (--json).
+//
+// See docs/guides/provider-calibration.md for the full workflow.
 package main
 
 import (
