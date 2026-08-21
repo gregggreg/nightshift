@@ -1,0 +1,44 @@
+name: Commit Lint
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  commit-lint:
+    name: Commit messages
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run normalizer test suite
+        run: bash tests/run-commit-msg-tests.sh
+
+      - name: Validate commit messages in the PR range
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -uo pipefail
+          failed=0
+          checked=0
+          for sha in $(git rev-list "$BASE_SHA..$HEAD_SHA"); do
+            checked=$((checked + 1))
+            message="$(git log -1 --format=%B "$sha")"
+            if ! printf '%s' "$message" | ./scripts/validate-commit-msg.sh - > /tmp/commit-lint.err 2>&1; then
+              echo "::error::$(git log -1 --format='%h %s' "$sha")"
+              sed 's/^/    /' /tmp/commit-lint.err
+              echo ""
+              failed=$((failed + 1))
+            fi
+          done
+          echo "checked $checked commit(s) in $BASE_SHA..$HEAD_SHA"
+          if [ "$failed" -gt 0 ]; then
+            echo "❌ $failed commit message(s) do not follow the project format."
+            echo "   Fix them with: git rebase -i $BASE_SHA  (reword the offending commits)"
+            exit 1
+          fi
+          echo "✅ all commit messages follow the project format"
