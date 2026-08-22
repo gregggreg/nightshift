@@ -38,6 +38,32 @@ check() {
 	fi
 }
 
+# check_output <expected-exit> <name> <message> <expected-substring>
+check_output() {
+	expected=$1
+	name=$2
+	message=$3
+	want=$4
+
+	file="$tmp_dir/msg"
+	printf '%s\n' "$message" >"$file"
+
+	set +e
+	output=$("$validator" "$file" 2>&1)
+	actual=$?
+	set -e
+
+	if [ "$actual" -eq "$expected" ] && printf '%s' "$output" | grep -qF "$want"; then
+		pass=$((pass + 1))
+		printf '  ✓ %s\n' "$name"
+	else
+		fail=$((fail + 1))
+		printf '  ✗ %s (want exit %s containing "%s", got exit %s)\n' \
+			"$name" "$expected" "$want" "$actual"
+		printf '%s\n' "$output" | sed 's/^/      /'
+	fi
+}
+
 echo "commit-msg validator"
 
 # --- accepted: one per allowed type ---
@@ -94,6 +120,33 @@ check 1 "rejects comment-only message" "# nothing here"
 check 1 "rejects over-length body line" "feat: add thing
 
 $(printf 'word %.0s' $(seq 1 40))"
+
+# --- lengths are counted in characters, not bytes ---
+# A subject full of accents, em-dashes, smart quotes, or emoji must get the
+# same 72-character budget as an ASCII one.
+check 0 "accepts 72-char subject with accents" \
+	"fix(core): café résumé naïve — handle accented input in the parser path"
+check 0 "accepts 72-char subject with emoji and smart quotes" \
+	"feat(ui): add 🎉 banner with “smart quotes” and – dashes in the subject"
+check_output 1 "reports non-ASCII subject length in characters" \
+	"fix(core): café résumé naïve — handle accented input in the parser pathss" \
+	"subject is 73 characters"
+check 0 "accepts body line of 100 accented characters" "docs: add note
+
+$(printf 'é%.0s' $(seq 1 91)) end word"
+
+# --- body errors point at the original file line ---
+# git does not strip the comment block before running commit-msg, and
+# `make install-hooks` installs an 18-line comment template, so a body line
+# number computed after stripping would not match the author's editor.
+check_output 1 "reports the original file line for a long body line" \
+	"# comment one
+# comment two
+# comment three
+feat: add thing
+
+$(printf 'word %.0s' $(seq 1 40))" \
+	"body line 6"
 
 # --- usage errors ---
 set +e

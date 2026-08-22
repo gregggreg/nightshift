@@ -28,7 +28,7 @@ pull request. Commits already on `main` are left alone.
 | Separator | A colon and a single space |
 | Mood | Imperative — "add", not "adds", "added", or "Add" |
 | Case | Starts lowercase; acronyms such as `JSONL` or `PR` are fine |
-| Length | 72 characters or fewer, including the type and scope |
+| Length | 72 characters or fewer, including the type and scope (characters, not bytes — accents and emoji count as one) |
 | Punctuation | No trailing period |
 
 ### Types
@@ -51,6 +51,10 @@ pull request. Commits already on `main` are left alone.
 
 Optional. Separate it from the subject with a blank line and wrap at 72 columns.
 Explain *what* changed and *why*; the diff already shows *how*.
+
+The hook wraps at 72 by convention but only rejects body lines longer than 100
+characters, so prose you deliberately keep on one line is not blocked. Trailers
+and unbreakable single tokens such as URLs are exempt from the limit entirely.
 
 ### Footers
 

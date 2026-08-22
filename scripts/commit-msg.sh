@@ -14,6 +14,31 @@ TYPES='feat|fix|docs|refactor|test|chore|build|ci|perf|style|revert'
 MAX_SUBJECT=72
 MAX_BODY=100
 
+# Limits are character counts, not byte counts: a subject with accents, an
+# em-dash, smart quotes, or emoji must not get a smaller budget than an ASCII
+# one. macOS awk measures length() in bytes even under a UTF-8 locale, so use
+# `wc -m`, which is multibyte-aware as long as the locale is. Probe for a UTF-8
+# locale this machine actually has rather than assuming a particular name.
+utf8_locale=""
+for candidate in "${LC_ALL:-}" "${LC_CTYPE:-}" "${LANG:-}" C.UTF-8 en_US.UTF-8; do
+	[ -n "$candidate" ] || continue
+	# U+00E9 is two bytes in UTF-8; a locale that reports 1 counts characters.
+	if [ "$(printf '\303\251' | LC_ALL="$candidate" wc -m 2>/dev/null | tr -d ' ')" = "1" ]; then
+		utf8_locale=$candidate
+		break
+	fi
+done
+
+# char_len <string> -- length in characters, falling back to bytes only when no
+# UTF-8 locale is available at all.
+char_len() {
+	if [ -n "$utf8_locale" ]; then
+		printf '%s' "$1" | LC_ALL="$utf8_locale" wc -m | tr -d ' '
+	else
+		printf '%s' "$1" | wc -c | tr -d ' '
+	fi
+}
+
 usage() {
 	echo "usage: $0 <commit-message-file>" >&2
 }
@@ -35,14 +60,20 @@ case "$comment_char" in
 "" | auto) comment_char='#' ;;
 esac
 
-# Strip comment lines and the scissors section git adds under --verbose.
-stripped=$(
+# Strip comment lines and the scissors section git adds under --verbose,
+# tagging each surviving line with its original line number so errors point at
+# the line the author is looking at in their editor. `git commit` does not strip
+# the comment block before running this hook, and the template installed by
+# `make install-hooks` is 18 comment lines, so the two numberings differ in the
+# normal workflow.
+numbered=$(
 	awk -v c="$comment_char" '
 		index($0, "------------------------ >8 ------------------------") { exit }
 		substr($0, 1, length(c)) == c { next }
-		{ sub(/\r$/, ""); print }
+		{ sub(/\r$/, ""); print NR "\t" $0 }
 	' "$message_file"
 )
+stripped=$(printf '%s\n' "$numbered" | awk '{ print substr($0, index($0, "\t") + 1) }')
 
 # The subject is the first non-blank line.
 subject=$(printf '%s\n' "$stripped" | awk 'NF { print; exit }')
@@ -80,7 +111,7 @@ else
 	description=${subject#*: }
 
 	# --- subject: length ---
-	length=$(printf '%s' "$subject" | wc -c | tr -d ' ')
+	length=$(char_len "$subject")
 	if [ "$length" -gt "$MAX_SUBJECT" ]; then
 		add_error "subject is $length characters; keep it to $MAX_SUBJECT or fewer"
 	fi
@@ -108,18 +139,39 @@ if [ -n "$next_line" ]; then
 	add_error "separate the subject from the body with a blank line"
 elif [ -n "$has_more" ]; then
 	# --- body: line length ---
-	long=$(
-		printf '%s\n' "$stripped" | awk -v s="$subject_line" -v max="$MAX_BODY" '
-			NR <= s + 1 { next }
-			/^[A-Za-z][A-Za-z0-9-]*: / { next }   # trailers (Nightshift-Task:, etc.)
-			$0 ~ /^[[:space:]]*$/ { next }
-			NF == 1 { next }                       # unbreakable tokens such as URLs
-			length($0) > max { print NR; exit }
-		'
-	)
-	if [ -n "$long" ]; then
-		add_error "body line $long exceeds $MAX_BODY characters; wrap the body at 72"
-	fi
+	# Walked in the shell rather than awk so the reported number is the original
+	# file line and the measurement counts characters, not bytes.
+	tab=$(printf '\t')
+	line_index=0
+	while IFS= read -r entry; do
+		line_index=$((line_index + 1))
+		[ "$line_index" -gt "$((subject_line + 1))" ] || continue
+
+		orig_line=${entry%%"$tab"*}
+		text=${entry#*"$tab"}
+
+		# Skip blank lines.
+		case "$text" in
+		*[![:space:]]*) ;;
+		*) continue ;;
+		esac
+		# Skip trailers (Nightshift-Task:, BREAKING CHANGE:, etc.).
+		if printf '%s' "$text" | grep -qE '^[A-Za-z][A-Za-z0-9-]*: '; then
+			continue
+		fi
+		# Skip unbreakable single tokens such as URLs.
+		if [ "$(printf '%s\n' "$text" | awk '{ print NF }')" -le 1 ]; then
+			continue
+		fi
+
+		text_length=$(char_len "$text")
+		if [ "$text_length" -gt "$MAX_BODY" ]; then
+			add_error "body line $orig_line is $text_length characters; keep body lines to $MAX_BODY or fewer (wrap at 72)"
+			break
+		fi
+	done <<-BODY
+	$numbered
+	BODY
 fi
 
 if [ -n "$errors" ]; then
