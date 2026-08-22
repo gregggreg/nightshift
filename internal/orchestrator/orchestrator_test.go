@@ -930,3 +930,40 @@ func TestRunTaskNoPRURL(t *testing.T) {
 		t.Errorf("OutputRef = %q, want empty", result.OutputRef)
 	}
 }
+
+func TestBuildPrompts_CommitConvention(t *testing.T) {
+	o := New()
+
+	task := &tasks.Task{
+		ID:          "commit-convention",
+		Title:       "Commit Convention",
+		Description: "Test commit instructions",
+		Type:        tasks.TaskType("commit-normalize"),
+	}
+	plan := &PlanOutput{
+		Steps:       []string{"step1"},
+		Description: "test plan",
+	}
+
+	// Both prompts must state the Conventional Commits subject format and keep
+	// the Nightshift trailers, so agent-authored commits pass the commit-msg
+	// hook. See docs/guides/commit-messages.md.
+	want := []string{
+		"Conventional Commits subject",
+		"<type>(<optional scope>): <lowercase imperative subject>",
+		"feat, fix, docs, refactor",
+		"Nightshift-Task: commit-normalize",
+		"Nightshift-Ref: https://github.com/marcus/nightshift",
+	}
+
+	for _, prompt := range map[string]string{
+		"plan":      o.buildPlanPrompt(task),
+		"implement": o.buildImplementPrompt(task, plan, 1),
+	} {
+		for _, substr := range want {
+			if !strings.Contains(prompt, substr) {
+				t.Errorf("prompt missing %q\nGot:\n%s", substr, prompt)
+			}
+		}
+	}
+}

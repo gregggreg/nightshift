@@ -728,7 +728,10 @@ Description: %s
 0. You are running autonomously. If the task is broad or ambiguous, choose a concrete, minimal scope that delivers value and state any assumptions in the description.
 1. Work on a new branch and plan to submit a PR. Never work directly on the primary branch.%s
 2. Before creating your branch, record the current branch name and plan to switch back after the PR is opened.
-3. If you create commits, include a concise message with these git trailers:
+3. If you create commits, use a Conventional Commits subject —
+   <type>(<optional scope>): <lowercase imperative subject> — 72 characters or
+   fewer, no trailing period, where type is one of feat, fix, docs, refactor,
+   test, chore, build, ci, perf, style, revert. Include these git trailers:
    Nightshift-Task: %s
    Nightshift-Ref: https://github.com/marcus/nightshift
 4. Analyze the task requirements
@@ -771,7 +774,10 @@ Description: %s
 ## Instructions
 0. Before creating your branch, record the current branch name. Create and work on a new branch. Never modify or commit directly to the primary branch.%s
    When finished, open a PR. After the PR is submitted, switch back to the original branch. If you cannot open a PR, leave the branch and explain next steps.
-1. If you create commits, include a concise message with these git trailers:
+1. If you create commits, use a Conventional Commits subject —
+   <type>(<optional scope>): <lowercase imperative subject> — 72 characters or
+   fewer, no trailing period, where type is one of feat, fix, docs, refactor,
+   test, chore, build, ci, perf, style, revert. Include these git trailers:
    Nightshift-Task: %s
    Nightshift-Ref: https://github.com/marcus/nightshift
 2. Implement the plan step by step

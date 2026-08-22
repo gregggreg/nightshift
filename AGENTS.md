@@ -54,3 +54,7 @@ go test ./...
 - **Style**: Standard Go (gofmt, govet). No magic, explicit is better.
 - **Errors**: Wrap with context, don't swallow.
 - **Tests**: Table-driven, in `_test.go` files alongside code.
+- **Commits**: Conventional Commits — `<type>(<scope>): <lowercase imperative subject>`,
+  72 chars or fewer, no trailing period. See [docs/guides/commit-messages.md](docs/guides/commit-messages.md).
+  Agent-authored commits keep their `Nightshift-Task:` and `Nightshift-Ref:` trailers.
+  Enforced by the `commit-msg` hook (`make install-hooks`) and CI for pull request commits.

@@ -258,20 +258,52 @@ Each task has a default cooldown interval to prevent the same task from running 
 
 ## Development
 
-### Pre-commit hooks
+### Git hooks
 
-Install the git pre-commit hook to catch formatting and vet issues before pushing:
+Install the git hooks and the commit message template:
 
 ```bash
 make install-hooks
 ```
 
-This symlinks `scripts/pre-commit.sh` into `.git/hooks/pre-commit`. The hook runs:
+This symlinks `scripts/pre-commit.sh` into `.git/hooks/pre-commit` and
+`scripts/commit-msg.sh` into `.git/hooks/commit-msg`, and points `commit.template` at
+`.gitmessage.txt`.
+
+The pre-commit hook runs:
 - **gofmt** — flags any staged `.go` files that need formatting
 - **go vet** — catches common correctness issues
 - **go build** — ensures the project compiles
 
+The commit-msg hook validates the commit message against the convention below.
+
 To bypass in a pinch: `git commit --no-verify`
+
+### Commit messages
+
+Commits follow [Conventional Commits](https://www.conventionalcommits.org/):
+
+```
+<type>(<optional scope>): <lowercase imperative subject>
+```
+
+Subjects are 72 characters or fewer with no trailing period, and the type is one of
+`feat`, `fix`, `docs`, `refactor`, `test`, `chore`, `build`, `ci`, `perf`, `style`, or
+`revert`. Commits authored by a nightshift run also carry `Nightshift-Task:` and
+`Nightshift-Ref:` trailers.
+
+See [docs/guides/commit-messages.md](docs/guides/commit-messages.md) for the full
+convention, including examples and the rules the validator applies.
+
+Check your branch before opening a pull request:
+
+```bash
+make lint-commits   # validates commits against origin/main
+make test-scripts   # runs the validator's own test suite
+```
+
+Existing history is left as-is — enforcement applies to new commits only. CI validates
+the commits in a pull request, not the commits already on `main`.
 
 ## Uninstalling
 

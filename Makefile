@@ -1,4 +1,4 @@
-.PHONY: build test test-verbose test-race coverage coverage-html lint clean deps check install calibrate-providers install-hooks help
+.PHONY: build test test-scripts test-verbose test-race coverage coverage-html lint lint-commits clean deps check install calibrate-providers install-hooks help
 
 # Binary name
 BINARY=nightshift
@@ -20,6 +20,10 @@ calibrate-providers:
 # Run all tests
 test:
 	go test ./...
+
+# Run shell script test suites
+test-scripts:
+	@./scripts/commit-msg_test.sh
 
 # Run tests with verbose output
 test-verbose:
@@ -46,6 +50,10 @@ lint:
 	@which golangci-lint > /dev/null || (echo "golangci-lint not installed. Run: go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest" && exit 1)
 	golangci-lint run
 
+# Validate commit messages on this branch against the default branch
+lint-commits:
+	@./scripts/check-commit-range.sh --base origin/main
+
 # Clean build artifacts
 clean:
 	rm -f $(BINARY)
@@ -65,20 +73,26 @@ help:
 	@echo "Available targets:"
 	@echo "  build         - Build the binary"
 	@echo "  test          - Run all tests"
+	@echo "  test-scripts  - Run shell script test suites"
 	@echo "  test-verbose  - Run tests with verbose output"
 	@echo "  test-race     - Run tests with race detection"
 	@echo "  coverage      - Run tests with coverage report"
 	@echo "  coverage-html - Generate HTML coverage report"
 	@echo "  lint          - Run golangci-lint"
+	@echo "  lint-commits  - Check commit messages against origin/main"
 	@echo "  clean         - Clean build artifacts"
 	@echo "  deps          - Download and tidy dependencies"
 	@echo "  check         - Run tests and lint"
 	@echo "  install       - Build and install to Go bin directory"
 	@echo "  calibrate-providers - Compare local Claude/Codex session usage for calibration"
-	@echo "  install-hooks  - Install git pre-commit hook"
+	@echo "  install-hooks  - Install git hooks and commit message template"
 	@echo "  help          - Show this help"
 
-# Install git pre-commit hook
+# Install git hooks and the commit message template
 install-hooks:
 	@ln -sf ../../scripts/pre-commit.sh .git/hooks/pre-commit
 	@echo "✓ pre-commit hook installed (.git/hooks/pre-commit → scripts/pre-commit.sh)"
+	@ln -sf ../../scripts/commit-msg.sh .git/hooks/commit-msg
+	@echo "✓ commit-msg hook installed (.git/hooks/commit-msg → scripts/commit-msg.sh)"
+	@git config commit.template .gitmessage.txt
+	@echo "✓ commit template set (commit.template → .gitmessage.txt)"

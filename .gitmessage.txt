@@ -1,0 +1,18 @@
+# <type>(<optional scope>): <subject>
+#
+# Subject rules:
+#   - one of: feat fix docs refactor test chore build ci perf style revert
+#   - lowercase, imperative mood ("add", not "adds" or "Added")
+#   - 72 characters or fewer, no trailing period
+#   - add ! before the colon for a breaking change: feat(config)!: ...
+#
+# Body (optional): explain what and why, not how. Wrap at 72 columns.
+# Leave a blank line between the subject and the body.
+#
+# Footers (optional):
+#   fixes #123
+#   BREAKING CHANGE: describe the migration
+#   Nightshift-Task: <task-id>          (agent-authored commits)
+#   Nightshift-Ref: https://github.com/marcus/nightshift
+#
+# Full convention: docs/guides/commit-messages.md

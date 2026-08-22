@@ -2,6 +2,17 @@
 
 All notable changes to nightshift are documented in this file.
 
+## [Unreleased]
+
+### Other
+- **Commit message convention** — commits now follow Conventional Commits, documented in
+  [docs/guides/commit-messages.md](docs/guides/commit-messages.md). A `commit-msg` hook
+  (installed by `make install-hooks`, alongside a `.gitmessage.txt` template) validates
+  messages locally, and a `commit-lint` CI job validates the commits in a pull request.
+  Existing history is not rewritten — enforcement applies to new commits only. Agent
+  prompts now request conforming subjects while keeping the `Nightshift-Task` and
+  `Nightshift-Ref` trailers.
+
 ## [v0.3.3] - 2026-02-19
 
 ### Features

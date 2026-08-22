@@ -50,3 +50,24 @@ jobs:
         uses: golangci/golangci-lint-action@v6
         with:
           version: latest
+
+  commit-lint:
+    name: Commit messages
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate pull request commit messages
+        env:
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          git fetch --no-tags origin "$BASE_REF"
+          # Only the commits unique to this pull request are checked; history
+          # already on the base branch is deliberately left alone.
+          base=$(git merge-base "origin/$BASE_REF" "$HEAD_SHA")
+          ./scripts/check-commit-range.sh --base "$base" "$HEAD_SHA"
