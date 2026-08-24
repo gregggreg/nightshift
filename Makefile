@@ -1,4 +1,4 @@
-.PHONY: build test test-verbose test-race coverage coverage-html lint clean deps check install calibrate-providers install-hooks help
+.PHONY: build test test-verbose test-race coverage coverage-html lint clean deps check install calibrate-providers install-hooks lint-commits help
 
 # Binary name
 BINARY=nightshift
@@ -75,10 +75,16 @@ help:
 	@echo "  check         - Run tests and lint"
 	@echo "  install       - Build and install to Go bin directory"
 	@echo "  calibrate-providers - Compare local Claude/Codex session usage for calibration"
-	@echo "  install-hooks  - Install git pre-commit hook"
+	@echo "  install-hooks  - Install git pre-commit and commit-msg hooks"
+	@echo "  lint-commits   - Lint commit messages in RANGE (e.g. make lint-commits RANGE=origin/main..HEAD)"
 	@echo "  help          - Show this help"
 
 # Install git pre-commit hook
 install-hooks:
 	@ln -sf ../../scripts/pre-commit.sh .git/hooks/pre-commit
 	@echo "✓ pre-commit hook installed (.git/hooks/pre-commit → scripts/pre-commit.sh)"
+	@ln -sf ../../scripts/commit-msg.sh .git/hooks/commit-msg
+	@echo "✓ commit-msg hook installed (.git/hooks/commit-msg → scripts/commit-msg.sh)"
+
+lint-commits:
+	@./scripts/lint-commit-msg.sh --range $(RANGE)
