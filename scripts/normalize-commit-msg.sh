@@ -4,13 +4,15 @@
 #
 # Usage:
 #   normalize-commit-msg.sh <file>            rewrite <file> in place
-#   normalize-commit-msg.sh --check <file>    validate only, exit non-zero on failure
+#   normalize-commit-msg.sh --check <file>    validate only, exit non-zero unless
+#                                             <file> is already normalized
 #
-# Exit codes: 0 ok (or exempt), 1 message cannot be normalized, 2 usage error.
+# Exit codes: 0 ok (or exempt), 1 message rejected, 2 usage error.
 set -uo pipefail
 
 ALLOWED_TYPES="build chore ci docs feat fix perf refactor revert style test"
 MAX_SUBJECT=72
+SCISSORS='# ------------------------ >8 ------------------------'
 
 usage() {
   echo "usage: $(basename "$0") [--check] <commit-msg-file>" >&2
@@ -39,30 +41,39 @@ fail() {
   exit 1
 }
 
-# --- read the raw message, dropping scissors/comment scaffolding -------------
-RAW=""
+# --- read the message --------------------------------------------------------
+# Only scaffolding that precedes the subject is dropped: leading blank lines and
+# the leading comment block git may have prefilled. Comment lines *inside* the
+# body are left alone — git runs its own cleanup after this hook returns, and
+# that cleanup is flow-aware (it strips comments for editor-authored messages
+# and deliberately keeps them for `git commit -m`). Stripping them here would
+# delete body text that git would otherwise have kept.
+#
+# Everything from the scissors line onward is dropped: git only emits it under
+# cleanup=scissors, where it discards that section itself.
+CONTENT=""
+STARTED=0
+CRLF=0
 while IFS= read -r line || [[ -n "$line" ]]; do
-  case "$line" in
-    '# ------------------------ >8 ------------------------') break ;;
-    '#'*) continue ;;
-  esac
-  RAW+="$line"$'\n'
+  [[ "${line%$'\r'}" == "$SCISSORS" ]] && break
+  if (( ! STARTED )); then
+    case "$line" in '#'*) continue ;; esac
+    [[ -z "${line//[[:space:]]/}" ]] && continue
+    STARTED=1
+    [[ "$line" == *$'\r' ]] && CRLF=1
+  fi
+  CONTENT+="$line"$'\n'
 done < "$FILE"
 
-# Strip leading blank lines.
-BODY_ALL="${RAW#"${RAW%%[![:space:]]*}"}"
-if [[ -z "$BODY_ALL" ]]; then
-  fail "message is empty"
-fi
+(( STARTED )) || fail "message is empty"
 
-SUBJECT="${BODY_ALL%%$'\n'*}"
-if [[ "$BODY_ALL" == *$'\n'* ]]; then
-  REST="${BODY_ALL#*$'\n'}"
-else
-  REST=""
-fi
+EOL=$'\n'
+(( CRLF )) && EOL=$'\r\n'
 
-# Trim surrounding whitespace from the subject.
+SUBJECT="${CONTENT%%$'\n'*}"
+REST="${CONTENT#*$'\n'}"
+
+# Trim surrounding whitespace from the subject (this also drops a trailing CR).
 SUBJECT="${SUBJECT#"${SUBJECT%%[![:space:]]*}"}"
 SUBJECT="${SUBJECT%"${SUBJECT##*[![:space:]]}"}"
 
@@ -117,17 +128,36 @@ fi
 
 # --- rebuild: subject, blank line, body/trailers byte-for-byte ---------------
 # REST keeps the body and every trailer untouched; we only guarantee that
-# exactly one blank line separates it from the subject.
-REST="${REST#"${REST%%[!$'\n']*}"}"           # drop any blank lines after the subject
-REST="${REST%"${REST##*[!$'\n']}"}"        # drop trailing newlines; re-added below
+# exactly one blank line separates it from the subject and that it ends in a
+# single newline.
+while [[ -n "$REST" ]]; do                     # drop blank lines after the subject
+  first="${REST%%$'\n'*}"
+  [[ -z "${first//[[:space:]]/}" ]] || break
+  REST="${REST#*$'\n'}"
+done
+REST="${REST%$'\n'}"; REST="${REST%$'\r'}"     # drop the final line ending
+while [[ "$REST" == *$'\n' ]]; do              # drop trailing blank lines
+  last="${REST##*$'\n'}"
+  [[ -z "${last//[[:space:]]/}" ]] || break
+  REST="${REST%$'\n'*}"; REST="${REST%$'\r'}"
+done
+[[ -z "${REST//[[:space:]]/}" ]] && REST=""
 
 if [[ -n "$REST" ]]; then
-  NORMALIZED="${NEW_SUBJECT}"$'\n\n'"${REST}"$'\n'
+  NORMALIZED="${NEW_SUBJECT}${EOL}${EOL}${REST}${EOL}"
 else
-  NORMALIZED="${NEW_SUBJECT}"$'\n'
+  NORMALIZED="${NEW_SUBJECT}${EOL}"
 fi
 
 if (( CHECK )); then
+  # --check asserts the message is already normalized, not merely normalizable:
+  # anything the in-place mode would rewrite is a violation to report.
+  if [[ "$NORMALIZED" != "$CONTENT" ]]; then
+    if [[ "$NEW_SUBJECT" != "$SUBJECT" ]]; then
+      fail "subject should be '$NEW_SUBJECT', not '$SUBJECT'"
+    fi
+    fail "subject and body must be separated by exactly one blank line"
+  fi
   exit 0
 fi
 

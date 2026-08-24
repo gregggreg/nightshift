@@ -106,13 +106,25 @@ Three dependency-free shell scripts live in `scripts/`:
 | Script | Purpose |
 | --- | --- |
 | `normalize-commit-msg.sh <file>` | Rewrites a message file in place |
-| `normalize-commit-msg.sh --check <file>` | Validates without rewriting |
+| `normalize-commit-msg.sh --check <file>` | Asserts the message is *already* normalized |
 | `lint-commit-msg.sh --range <base>..<head>` | Lints every commit in a range |
 | `commit-msg.sh` | The git `commit-msg` hook wrapper |
 
 The normalizer trims whitespace, lowercases the type and scope, drops a trailing period,
 guarantees the blank second line, and warns (never fails) on an over-length subject. The
 body and every trailer are left untouched.
+
+`--check` never rewrites. It rejects any message that the in-place mode *would* rewrite —
+so the **Bad** examples above (uppercase type, trailing period, missing blank second line)
+all fail the check, not just unknown or missing types. That is what makes
+`lint-commit-msg.sh --range` a real gate once `continue-on-error` is dropped from CI.
+
+The normalizer deliberately does **not** strip `#` comment lines from the body. Git runs
+its own cleanup *after* the `commit-msg` hook returns, and that cleanup is flow-aware: it
+strips comments from editor-authored messages but keeps them for `git commit -m` (where
+the cleanup mode is `whitespace`). Removing them in the hook would delete body text that
+git would otherwise have preserved. Only the comment block *preceding* the subject and
+everything from the scissors line onward are dropped.
 
 ### Installing the hook (opt-in)
 

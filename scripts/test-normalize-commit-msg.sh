@@ -91,9 +91,20 @@ assert_normalizes "breaking-change marker preserved" \
   $'feat(config)!: drop the legacy schema\n' \
   'feat(config)!: drop the legacy schema'
 
-assert_normalizes "comment lines stripped" \
-  $'chore: tidy up\n# Please enter the commit message for your changes.\n# On branch main\n' \
+assert_normalizes "leading comment scaffolding stripped" \
+  $'# Please enter the commit message for your changes.\n# On branch main\nchore: tidy up\n' \
   'chore: tidy up'
+
+# git runs its own cleanup after the commit-msg hook, and that cleanup is
+# flow-aware: it strips comments from editor-authored messages but keeps them
+# for `git commit -m`. Deleting them here would destroy body text git keeps.
+assert_normalizes "comment lines in the body are left for git to clean up" \
+  $'chore: tidy up\n\n#note kept?\n\nNightshift-Task: t1\n' \
+  $'chore: tidy up\n\n#note kept?\n\nNightshift-Task: t1'
+
+assert_normalizes "trailing comment block left for git to clean up" \
+  $'chore: tidy up\n# Please enter the commit message for your changes.\n# On branch main\n' \
+  $'chore: tidy up\n\n# Please enter the commit message for your changes.\n# On branch main'
 
 assert_normalizes "scissors section dropped" \
   $'chore: tidy up\n# ------------------------ >8 ------------------------\ndiff --git a/x b/x\n' \
@@ -126,6 +137,44 @@ assert_rejects "unknown type rejected" $'wibble: do a thing\n'
 assert_rejects "free-form subject rejected" $'Add pre-commit hook for gofmt\n'
 assert_rejects "empty message rejected" $'\n\n'
 assert_rejects "empty description rejected" $'feat: \n'
+
+# --- CRLF input keeps CRLF line endings --------------------------------------
+assert_normalizes "crlf message keeps crlf endings" \
+  $'feat: x\r\n\r\nbody\r\n' \
+  $'feat: x\r\n\r\nbody\r'
+
+assert_normalizes "crlf message with a missing separator" \
+  $'Feat: X.\r\nbody\r\n' \
+  $'feat: X\r\n\r\nbody\r'
+
+# --- --check accepts only already-normalized messages ------------------------
+# assert_check_ok / assert_check_fails <name> <input>
+assert_check_ok() {
+  local name="$1" input="$2" f
+  f="$TMPDIR_TEST/chk"
+  printf '%s' "$input" > "$f"
+  if "$NORMALIZE" --check "$f" >/dev/null 2>&1; then
+    echo "✓ $name"; PASS=$((PASS + 1))
+  else
+    echo "✗ $name \u2014 expected --check to pass"; FAIL=$((FAIL + 1))
+  fi
+}
+
+assert_check_ok "--check accepts a normalized message" \
+  $'feat(cli): add --dry-run flag\n'
+assert_check_ok "--check accepts a normalized message with trailers" \
+  $'feat(tasks): add the normalizer\n\nBody paragraph.\n\nNightshift-Task: commit-normalize\n'
+assert_check_ok "--check exempts merge commits" \
+  $'Merge pull request #17 from someone/branch\n'
+
+assert_rejects "--check rejects an uppercase type with a trailing period" \
+  $'Feat(API): Add thing.\n'
+assert_rejects "--check rejects a missing blank line before the body" \
+  $'feat: x\nbody line\n'
+assert_rejects "--check rejects extra blank lines before the body" \
+  $'feat: x\n\n\nbody line\n'
+assert_rejects "--check rejects a trailing period" \
+  $'docs: update the readme.\n'
 
 # --- --check never rewrites --------------------------------------------------
 CHECK_FILE="$TMPDIR_TEST/check"
