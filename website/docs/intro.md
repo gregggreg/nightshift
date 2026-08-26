@@ -42,4 +42,8 @@ nightshift run
 - [Installation](/docs/installation) — All installation methods
 - [Quick Start](/docs/quick-start) — Get running in 2 minutes
 - [Configuration](/docs/configuration) — Customize budgets, schedules, and tasks
-- [Tasks](/docs/tasks) — Browse the 20+ built-in tasks
+- [Tasks](/docs/tasks) — Browse the 59 built-in tasks
+- [Budget](/docs/budget) — How budget tracking and calibration work
+- [Scheduling](/docs/scheduling) — Run Nightshift automatically
+- [CLI Reference](/docs/cli-reference) — Every command and flag
+- [Troubleshooting](/docs/troubleshooting) — Fixes for common problems
