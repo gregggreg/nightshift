@@ -84,10 +84,14 @@ help:
 	@echo "  help          - Show this help"
 
 # Install git hooks and the commit message template
+# Resolved via git so this works inside linked worktrees, where .git is a file
+# rather than a directory. Absolute link targets for the same reason.
 install-hooks:
-	@ln -sf ../../scripts/pre-commit.sh .git/hooks/pre-commit
-	@echo "✓ pre-commit hook installed (.git/hooks/pre-commit → scripts/pre-commit.sh)"
-	@ln -sf ../../scripts/commit-msg.sh .git/hooks/commit-msg
-	@echo "✓ commit-msg hook installed (.git/hooks/commit-msg → scripts/commit-msg.sh)"
+	@hooks="$$(git rev-parse --git-path hooks)"; root="$$(git rev-parse --show-toplevel)"; \
+	mkdir -p "$$hooks"; \
+	ln -sf "$$root/scripts/pre-commit.sh" "$$hooks/pre-commit"; \
+	echo "✓ pre-commit hook installed ($$hooks/pre-commit → scripts/pre-commit.sh)"; \
+	ln -sf "$$root/scripts/commit-msg.sh" "$$hooks/commit-msg"; \
+	echo "✓ commit-msg hook installed ($$hooks/commit-msg → scripts/commit-msg.sh)"
 	@git config commit.template .gitmessage
 	@echo "✓ commit template configured (commit.template → .gitmessage)"

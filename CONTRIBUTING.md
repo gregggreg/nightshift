@@ -47,8 +47,11 @@ Subject rules, all enforced by `scripts/commit-msg.sh`:
 - `<scope>` is optional, in parentheses, lowercase `[a-z0-9._/-]`.
 - `!` before the colon marks a breaking change.
 - Exactly one space after the colon.
-- `<description>` is imperative mood ("add", not "added"/"adds"), starts with a
-  lowercase letter, and does not end with a period.
+- `<description>` is imperative mood ("add", not "added"/"adds"), is not
+  sentence-cased, and does not end with a period. It must start with a letter
+  or digit; leading digits and acronyms are fine (`2x faster lookups`,
+  `HTTP retry support`, `OAuth token refresh`). What the hook rejects is a
+  capital immediately followed by a lowercase letter — `Add budget calibration`.
 - The whole subject line is **72 characters or fewer**.
 - If a body follows, line 2 must be blank.
 

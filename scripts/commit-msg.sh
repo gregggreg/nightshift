@@ -16,6 +16,13 @@ if [[ -z "$MSG_FILE" || ! -f "$MSG_FILE" ]]; then
   exit 1
 fi
 
+# Git strips comment lines using core.commentChar (a single char, or "auto",
+# which still emits "#" in the common case). core.commentString supersedes it in
+# newer git. Honor whichever is configured so custom setups are not mis-parsed.
+COMMENT="$(git config --get core.commentString 2>/dev/null || true)"
+[[ -z "$COMMENT" ]] && COMMENT="$(git config --get core.commentChar 2>/dev/null || true)"
+[[ -z "$COMMENT" || "$COMMENT" == "auto" ]] && COMMENT="#"
+
 # --- strip comments and the `commit -v` / scissors diff ---
 LINES=()
 while IFS= read -r line || [[ -n "$line" ]]; do
@@ -23,8 +30,11 @@ while IFS= read -r line || [[ -n "$line" ]]; do
   if [[ "$line" == *"------------------------ >8 ------------------------"* ]]; then
     break
   fi
-  [[ "$line" == "#"* ]] && continue
-  LINES+=("$line")
+  [[ "$line" == "$COMMENT"* ]] && continue
+  # git's default cleanup strips trailing whitespace *after* this hook runs, so
+  # trim it here too — otherwise "feat: x. " sneaks past the no-period rule and
+  # lands on the branch as "feat: x."
+  LINES+=("${line%"${line##*[![:space:]]}"}")
 done < "$MSG_FILE"
 
 # --- locate the subject: first non-empty line ---
@@ -56,7 +66,7 @@ reject() {
   echo "    example:  $fix"
   echo ""
   echo "    types:    ${TYPES//|/, }"
-  echo "    limits:   subject ≤ ${MAX_SUBJECT} chars, lowercase start, no trailing period"
+  echo "    limits:   subject ≤ ${MAX_SUBJECT} chars, not sentence-cased, no trailing period"
   echo ""
   echo "❌ Commit message rejected. See CONTRIBUTING.md, or bypass with --no-verify."
   exit 1
@@ -86,8 +96,16 @@ if [[ -z "$DESC" ]]; then
   reject "empty description" "feat(budget): add daily calibration"
 fi
 
-if [[ ! "$DESC" =~ ^[a-z] ]]; then
-  reject "description must start with a lowercase letter" "feat: add daily calibration"
+if [[ ! "$DESC" =~ ^[A-Za-z0-9] ]]; then
+  reject "description must start with a letter or digit" "feat: add daily calibration"
+fi
+
+# Reject Sentence case ("Add x") but allow digits ("2x faster") and acronyms
+# ("HTTP retry", "OAuth refresh") — a capital is only wrong when a lowercase
+# letter follows it immediately.
+if [[ "$DESC" =~ ^[A-Z][a-z] ]]; then
+  reject "description must not be sentence-cased (write 'add x', not 'Add x')" \
+    "feat: add daily calibration"
 fi
 
 if [[ "$DESC" == *. ]]; then

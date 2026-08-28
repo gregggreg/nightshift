@@ -283,7 +283,7 @@ Nightshift uses [Conventional Commits](https://www.conventionalcommits.org/):
 <type>[(<scope>)][!]: <description>
 ```
 
-Types: `feat`, `fix`, `docs`, `chore`, `test`, `refactor`, `perf`, `build`, `ci`, `style`, `revert`. Subjects are lowercase, imperative, carry no trailing period, and stay at 72 characters or fewer. Existing history predates this convention and is grandfathered — CI only checks the commits in a pull request. Full rules: [CONTRIBUTING.md](CONTRIBUTING.md#commit-messages).
+Types: `feat`, `fix`, `docs`, `chore`, `test`, `refactor`, `perf`, `build`, `ci`, `style`, `revert`. Subjects are imperative and not sentence-cased (acronyms and digits are fine), carry no trailing period, and stay at 72 characters or fewer. Existing history predates this convention and is grandfathered — CI only checks the commits in a pull request. Full rules: [CONTRIBUTING.md](CONTRIBUTING.md#commit-messages).
 
 ## Uninstalling
 
