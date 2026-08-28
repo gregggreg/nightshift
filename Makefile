@@ -1,4 +1,4 @@
-.PHONY: build test test-verbose test-race coverage coverage-html lint clean deps check install calibrate-providers install-hooks help
+.PHONY: build test test-verbose test-race coverage coverage-html lint clean deps check install calibrate-providers install-hooks test-hooks help
 
 # Binary name
 BINARY=nightshift
@@ -57,8 +57,12 @@ deps:
 	go mod download
 	go mod tidy
 
+# Run the commit-msg validator fixture tests
+test-hooks:
+	@bash scripts/commit-msg-test.sh
+
 # Run all checks (test + lint)
-check: test lint
+check: test lint test-hooks
 
 # Show help
 help:
@@ -73,12 +77,17 @@ help:
 	@echo "  clean         - Clean build artifacts"
 	@echo "  deps          - Download and tidy dependencies"
 	@echo "  check         - Run tests and lint"
+	@echo "  test-hooks    - Run the commit-msg validator test suite"
 	@echo "  install       - Build and install to Go bin directory"
 	@echo "  calibrate-providers - Compare local Claude/Codex session usage for calibration"
-	@echo "  install-hooks  - Install git pre-commit hook"
+	@echo "  install-hooks  - Install git hooks (pre-commit, commit-msg) and commit template"
 	@echo "  help          - Show this help"
 
-# Install git pre-commit hook
+# Install git hooks and the commit message template
 install-hooks:
 	@ln -sf ../../scripts/pre-commit.sh .git/hooks/pre-commit
 	@echo "✓ pre-commit hook installed (.git/hooks/pre-commit → scripts/pre-commit.sh)"
+	@ln -sf ../../scripts/commit-msg.sh .git/hooks/commit-msg
+	@echo "✓ commit-msg hook installed (.git/hooks/commit-msg → scripts/commit-msg.sh)"
+	@git config commit.template .gitmessage
+	@echo "✓ commit template configured (commit.template → .gitmessage)"
