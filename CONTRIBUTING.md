@@ -123,6 +123,22 @@ mostly merge commits, `Bump version to ...` subjects, and otherwise-valid
 subjects that run past 72 characters because a `(#42)` or `(td-abc123)` ref was
 appended. Those stay as they are.
 
+To reproduce those numbers:
+
+```bash
+git rev-list --count main                                   # 171
+git log --pretty=%s main | grep -cE \
+  '^(feat|fix|docs|chore|test|refactor|perf|build|ci|style|revert)(\([^)]+\))?!?: '   # 129
+git log --pretty=%s main | while read -r s; do \
+  printf '%s\n' "$s" > /tmp/m && scripts/commit-msg.sh /tmp/m >/dev/null 2>&1 \
+  || echo "$s"; done | wc -l                                # 61 rejected -> 110 pass
+```
+
+The 129 figure counts *any* parenthesised scope. Exactly one of those commits
+(`fix(#19): ...`) uses a scope the validator rejects, so a stricter count that
+requires a `[a-z0-9._/-]+` scope gives 128. Either way the 110-pass and
+61-reject figures are unchanged, since the validator is what produced them.
+
 Because of this, CI validates **only the commits in a pull request's range**
 (`origin/<base>..HEAD`), never the full history. A `git log` on `main` will
 still show non-conforming subjects, and that is expected.

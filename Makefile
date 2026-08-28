@@ -84,10 +84,13 @@ help:
 	@echo "  help          - Show this help"
 
 # Install git hooks and the commit message template
-# Resolved via git so this works inside linked worktrees, where .git is a file
-# rather than a directory. Absolute link targets for the same reason.
+# The hooks directory is shared by every worktree, so link targets must resolve
+# to the MAIN worktree (--git-common-dir/..), not the current one
+# (--show-toplevel). Linking a throwaway worktree's path would leave a dangling
+# symlink once that worktree is removed, and git skips broken hooks silently.
 install-hooks:
-	@hooks="$$(git rev-parse --git-path hooks)"; root="$$(git rev-parse --show-toplevel)"; \
+	@hooks="$$(git rev-parse --git-path hooks)"; \
+	root="$$(cd "$$(git rev-parse --path-format=absolute --git-common-dir)/.." && pwd)"; \
 	mkdir -p "$$hooks"; \
 	ln -sf "$$root/scripts/pre-commit.sh" "$$hooks/pre-commit"; \
 	echo "✓ pre-commit hook installed ($$hooks/pre-commit → scripts/pre-commit.sh)"; \
