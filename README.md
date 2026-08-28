@@ -258,20 +258,32 @@ Each task has a default cooldown interval to prevent the same task from running 
 
 ## Development
 
-### Pre-commit hooks
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the full contributor guide, including the commit message convention.
 
-Install the git pre-commit hook to catch formatting and vet issues before pushing:
+### Git hooks
+
+Install the git hooks and commit template in one step:
 
 ```bash
 make install-hooks
 ```
 
-This symlinks `scripts/pre-commit.sh` into `.git/hooks/pre-commit`. The hook runs:
-- **gofmt** — flags any staged `.go` files that need formatting
-- **go vet** — catches common correctness issues
-- **go build** — ensures the project compiles
+This wires up:
+- **pre-commit** (`scripts/pre-commit.sh`) — gofmt, `go vet`, and `go build` on staged Go files
+- **commit-msg** (`scripts/commit-msg.sh`) — validates the commit subject against the convention
+- **commit template** (`.gitmessage`) — prefills `git commit` with the format guide
 
 To bypass in a pinch: `git commit --no-verify`
+
+### Commit messages
+
+Nightshift uses [Conventional Commits](https://www.conventionalcommits.org/):
+
+```
+<type>[(<scope>)][!]: <description>
+```
+
+Types: `feat`, `fix`, `docs`, `chore`, `test`, `refactor`, `perf`, `build`, `ci`, `style`, `revert`. Subjects are lowercase, imperative, carry no trailing period, and stay at 72 characters or fewer. Existing history predates this convention and is grandfathered — CI only checks the commits in a pull request. Full rules: [CONTRIBUTING.md](CONTRIBUTING.md#commit-messages).
 
 ## Uninstalling
 
