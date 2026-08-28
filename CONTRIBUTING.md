@@ -116,9 +116,9 @@ commits, `Revert "..."`, and `fixup!` / `squash!` / `amend!` commits.
 
 ### Grandfathered history
 
-History is **not** rewritten. Of the 174 commits on `main` at the time this
-convention was written down, 132 (76%) already used a Conventional Commits
-prefix and 113 pass the validator as-is; the remaining 61 predate the rules —
+History is **not** rewritten. Of the 171 commits on `main` at the time this
+convention was written down, 129 (75%) already used a Conventional Commits
+prefix and 110 pass the validator as-is; the remaining 61 predate the rules —
 mostly merge commits, `Bump version to ...` subjects, and otherwise-valid
 subjects that run past 72 characters because a `(#42)` or `(td-abc123)` ref was
 appended. Those stay as they are.
