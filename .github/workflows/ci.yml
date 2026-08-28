@@ -50,3 +50,41 @@ jobs:
         uses: golangci/golangci-lint-action@v6
         with:
           version: latest
+
+  commit-lint:
+    name: Commit messages
+    runs-on: ubuntu-latest
+    # PR-range only: history on main predates this convention and is grandfathered.
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Test the validator
+        run: bash scripts/commit-msg-test.sh
+
+      - name: Validate commit messages in this PR
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          git fetch --no-tags origin "$BASE_REF"
+          RANGE="origin/$BASE_REF..HEAD"
+          FAIL=0
+          COUNT=0
+          for sha in $(git rev-list "$RANGE"); do
+            COUNT=$((COUNT+1))
+            git log -1 --format=%B "$sha" > /tmp/commit-msg
+            if ! bash scripts/commit-msg.sh /tmp/commit-msg; then
+              echo "  ↳ commit $(git log -1 --format='%h %s' "$sha")"
+              FAIL=$((FAIL+1))
+            fi
+          done
+          echo ""
+          if [ "$FAIL" -gt 0 ]; then
+            echo "❌ $FAIL of $COUNT commit message(s) in $RANGE are invalid."
+            echo "   See CONTRIBUTING.md, or run: make install-hooks"
+            exit 1
+          fi
+          echo "✅ All $COUNT commit message(s) in $RANGE are valid."
