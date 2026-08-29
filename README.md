@@ -273,6 +273,35 @@ This symlinks `scripts/pre-commit.sh` into `.git/hooks/pre-commit`. The hook run
 
 To bypass in a pinch: `git commit --no-verify`
 
+### Commit message format
+
+Commits follow [Conventional Commits](https://www.conventionalcommits.org/):
+
+```
+type(scope)!: subject
+
+Body, wrapped at 72 columns.
+
+Trailer-Key: value
+```
+
+- `type` is lowercase and one of `feat`, `fix`, `docs`, `style`, `refactor`,
+  `perf`, `test`, `build`, `ci`, `chore`, `revert`
+- the whole header line is at most 72 characters, imperative mood, no
+  trailing period
+- trailers form one block at the very end
+
+`make install-hooks` also installs a `commit-msg` hook that enforces this via
+`nightshift commit-msg --check`. You can run the checker yourself:
+
+```bash
+nightshift commit-msg --print-spec              # Show the full format
+nightshift commit-msg --check .git/COMMIT_EDITMSG
+nightshift commit-msg --fix .git/COMMIT_EDITMSG # Rewrite it for you
+```
+
+To bypass in a pinch: `git commit --no-verify`
+
 ## Uninstalling
 
 ```bash
