@@ -273,6 +273,41 @@ This symlinks `scripts/pre-commit.sh` into `.git/hooks/pre-commit`. The hook run
 
 To bypass in a pinch: `git commit --no-verify`
 
+### Commit message format
+
+Commits follow [Conventional Commits](https://www.conventionalcommits.org/):
+
+```
+type(scope)!: subject
+
+Body, wrapped at 72 columns.
+
+Trailer-Key: value
+```
+
+- `type` is lowercase and one of `feat`, `fix`, `docs`, `style`, `refactor`,
+  `perf`, `test`, `build`, `ci`, `chore`, `revert`
+- the whole header line is at most 72 characters, imperative mood, no
+  trailing period
+- trailers form one block at the very end
+- messages git writes itself are exempt — `Merge branch/branches/tag/commit/
+  pull request/remote-tracking branch ...`, `Revert "...`, and `fixup! `,
+  `squash! ` or `amend! ` headers always pass, so `git merge` and
+  `git rebase --autosquash` are unaffected. The exemption matches only what
+  git actually writes: a subject of your own like "Merge duplicate loaders"
+  is still checked
+
+`make install-hooks` also installs a `commit-msg` hook that enforces this via
+`nightshift commit-msg --check`. You can run the checker yourself:
+
+```bash
+nightshift commit-msg --print-spec              # Show the full format
+nightshift commit-msg --check .git/COMMIT_EDITMSG
+nightshift commit-msg --fix .git/COMMIT_EDITMSG # Rewrite it for you
+```
+
+To bypass in a pinch: `git commit --no-verify`
+
 ## Uninstalling
 
 ```bash

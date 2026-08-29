@@ -73,6 +73,39 @@ nightshift task run lint-fix --provider claude
 nightshift task run lint-fix --provider codex --dry-run
 ```
 
+## Commit Message Commands
+
+```bash
+nightshift commit-msg --print-spec              # Print the required format
+nightshift commit-msg --check .git/COMMIT_EDITMSG
+nightshift commit-msg --fix .git/COMMIT_EDITMSG # Rewrite the file in place
+printf 'Fixed the thing.' | nightshift commit-msg --fix -
+```
+
+`commit-msg` reads the message from the given file, or from stdin when the
+argument is `-` or omitted. Without `--fix` it validates, printing issues as
+`file:line: severity: message (rule)` and exiting non-zero if any are errors.
+
+| Flag | Description |
+|------|-------------|
+| `--check` | Validate only; exit non-zero when the message has errors (the default) |
+| `--fix` | Rewrite the message into the canonical format |
+| `--print-spec` | Print the commit message format and exit |
+| `--quiet` | Suppress issue output; rely on the exit code |
+
+The expected format is Conventional Commits: `type(scope)!: subject`, a blank
+line, a body wrapped at 72 columns, and a single trailing block of git
+trailers. Messages git generates itself — `Merge branch/branches/tag/
+commit/pull request/remote-tracking branch ...`, `Revert "...`, and `fixup! `,
+`squash! ` or `amend! ` headers — are exempt, so merges and
+`git rebase --autosquash` are never blocked. Only the headers git itself
+writes are exempt; a hand-written subject that opens with the word "Merge" is
+validated like any other.
+
+`make install-hooks` installs a `commit-msg` hook that runs
+`nightshift commit-msg --check` on every commit; bypass it with
+`git commit --no-verify`.
+
 ## Budget Commands
 
 ```bash
