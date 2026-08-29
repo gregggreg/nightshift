@@ -2,6 +2,17 @@
 
 All notable changes to nightshift are documented in this file.
 
+## [Unreleased]
+
+### Features
+- **Commit message normalizer** — new `internal/commitmsg` package plus a
+  `nightshift commit-msg` subcommand (`--check`, `--fix`, `--print-spec`,
+  `--quiet`) that validates and rewrites commit messages against one
+  Conventional Commits format. `make install-hooks` now also installs a
+  `commit-msg` git hook, and the orchestrator's plan and implement prompts
+  quote the same canonical spec so autonomous agents write messages the hook
+  accepts.
+
 ## [v0.3.3] - 2026-02-19
 
 ### Features

@@ -73,6 +73,32 @@ nightshift task run lint-fix --provider claude
 nightshift task run lint-fix --provider codex --dry-run
 ```
 
+## Commit Message Commands
+
+```bash
+nightshift commit-msg --print-spec              # Print the required format
+nightshift commit-msg --check .git/COMMIT_EDITMSG
+nightshift commit-msg --fix .git/COMMIT_EDITMSG # Rewrite the file in place
+printf 'Fixed the thing.' | nightshift commit-msg --fix -
+```
+
+`commit-msg` reads the message from the given file, or from stdin when the
+argument is `-` or omitted. Without `--fix` it validates, printing issues as
+`file:line: severity: message (rule)` and exiting non-zero if any are errors.
+
+| Flag | Description |
+|------|-------------|
+| `--check` | Validate only; exit non-zero when the message has errors (the default) |
+| `--fix` | Rewrite the message into the canonical format |
+| `--print-spec` | Print the commit message format and exit |
+| `--quiet` | Suppress issue output; rely on the exit code |
+
+The expected format is Conventional Commits: `type(scope)!: subject`, a blank
+line, a body wrapped at 72 columns, and a single trailing block of git
+trailers. `make install-hooks` installs a `commit-msg` hook that runs
+`nightshift commit-msg --check` on every commit; bypass it with
+`git commit --no-verify`.
+
 ## Budget Commands
 
 ```bash
