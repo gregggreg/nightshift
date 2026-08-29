@@ -290,6 +290,9 @@ Trailer-Key: value
 - the whole header line is at most 72 characters, imperative mood, no
   trailing period
 - trailers form one block at the very end
+- messages git writes itself are exempt — headers starting with `Merge `,
+  `Revert "`, `fixup! `, `squash! ` or `amend! ` always pass, so `git merge`
+  and `git rebase --autosquash` are unaffected
 
 `make install-hooks` also installs a `commit-msg` hook that enforces this via
 `nightshift commit-msg --check`. You can run the checker yourself:

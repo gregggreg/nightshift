@@ -11,7 +11,8 @@ All notable changes to nightshift are documented in this file.
   Conventional Commits format. `make install-hooks` now also installs a
   `commit-msg` git hook, and the orchestrator's plan and implement prompts
   quote the same canonical spec so autonomous agents write messages the hook
-  accepts.
+  accepts. Messages git generates itself — merges, reverts and
+  `fixup!`/`squash!`/`amend!` commits — are exempt from the format.
 
 ## [v0.3.3] - 2026-02-19
 

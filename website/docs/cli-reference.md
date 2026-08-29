@@ -95,7 +95,11 @@ argument is `-` or omitted. Without `--fix` it validates, printing issues as
 
 The expected format is Conventional Commits: `type(scope)!: subject`, a blank
 line, a body wrapped at 72 columns, and a single trailing block of git
-trailers. `make install-hooks` installs a `commit-msg` hook that runs
+trailers. Messages git generates itself — headers starting with `Merge `,
+`Revert "`, `fixup! `, `squash! ` or `amend! ` — are exempt, so merges and
+`git rebase --autosquash` are never blocked.
+
+`make install-hooks` installs a `commit-msg` hook that runs
 `nightshift commit-msg --check` on every commit; bypass it with
 `git commit --no-verify`.
 

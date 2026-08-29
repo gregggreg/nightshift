@@ -501,3 +501,124 @@ func TestPromptSpec_IncludesTrailers(t *testing.T) {
 		t.Errorf("PromptSpec missing ref trailer:\n%s", s)
 	}
 }
+
+// --- Git-generated messages ---
+
+// gitGenerated are headers git itself writes, which the hook must let through
+// untouched: rejecting them breaks `git merge --no-ff` and `--autosquash`.
+var gitGenerated = []string{
+	"Merge branch 'side'",
+	"Merge branch 'side' into main",
+	"Merge pull request #186 from marcus/chore/commit-message-normalizer",
+	"Merge remote-tracking branch 'origin/main'",
+	`Revert "feat(cli): add commit message normalizer"`,
+	"fixup! feat(cli): add commit message normalizer",
+	"squash! feat(cli): add commit message normalizer",
+	"amend! feat(cli): add commit message normalizer",
+}
+
+func TestIsGitGenerated(t *testing.T) {
+	for _, header := range gitGenerated {
+		if !IsGitGenerated(header) {
+			t.Errorf("IsGitGenerated(%q) = false, want true", header)
+		}
+	}
+	notGenerated := []string{
+		"feat: add merge support",
+		"Merged the branches",
+		"merge branch 'side'",
+		"Revert the thing",
+		"fixup the thing",
+		"fix: revert \"a change\"",
+		"Mergebranch 'side'",
+	}
+	for _, header := range notGenerated {
+		if IsGitGenerated(header) {
+			t.Errorf("IsGitGenerated(%q) = true, want false", header)
+		}
+	}
+}
+
+func TestParse_MarksGitGenerated(t *testing.T) {
+	for _, header := range gitGenerated {
+		m, err := Parse(header + "\n")
+		if err != nil {
+			t.Fatalf("Parse(%q): %v", header, err)
+		}
+		if !m.GitGenerated {
+			t.Errorf("Parse(%q).GitGenerated = false, want true", header)
+		}
+	}
+	m, err := Parse("feat: add a thing\n")
+	if err != nil {
+		t.Fatalf("Parse: %v", err)
+	}
+	if m.GitGenerated {
+		t.Error("GitGenerated = true for a conventional header, want false")
+	}
+}
+
+func TestValidate_SkipsGitGenerated(t *testing.T) {
+	for _, header := range gitGenerated {
+		m, err := Parse(header + "\n")
+		if err != nil {
+			t.Fatalf("Parse(%q): %v", header, err)
+		}
+		if issues := Validate(m); len(issues) != 0 {
+			t.Errorf("Validate(%q) = %v, want no issues", header, issues)
+		}
+	}
+}
+
+func TestValidate_GitGeneratedIgnoresRequiredTrailers(t *testing.T) {
+	opts := DefaultOptions()
+	opts.RequiredTrailers = []Trailer{{Key: "Nightshift-Task", Value: "commit-normalize"}}
+	m, err := Parse("Merge branch 'side'\n")
+	if err != nil {
+		t.Fatalf("Parse: %v", err)
+	}
+	if issues := ValidateWithOptions(m, opts); len(issues) != 0 {
+		t.Errorf("ValidateWithOptions = %v, want no issues", issues)
+	}
+}
+
+func TestValidate_MergeWithConflictBodyIsClean(t *testing.T) {
+	// What git actually hands the hook for a conflicted merge resolution.
+	raw := "Merge branch 'side'\n\n# Conflicts:\n#\tfile.go\n"
+	m, err := Parse(raw)
+	if err != nil {
+		t.Fatalf("Parse: %v", err)
+	}
+	if issues := Validate(m); len(issues) != 0 {
+		t.Errorf("Validate = %v, want no issues", issues)
+	}
+}
+
+func TestNormalize_LeavesGitGeneratedUntouched(t *testing.T) {
+	opts := DefaultOptions()
+	opts.RequiredTrailers = []Trailer{{Key: "Nightshift-Task", Value: "commit-normalize"}}
+	for _, header := range gitGenerated {
+		raw := header + "\n"
+		got, issues, err := Normalize(raw, opts)
+		if err != nil {
+			t.Fatalf("Normalize(%q): %v", header, err)
+		}
+		if got != raw {
+			t.Errorf("Normalize(%q) = %q, want it unchanged", header, got)
+		}
+		if len(issues) != 0 {
+			t.Errorf("Normalize(%q) issues = %v, want none", header, issues)
+		}
+	}
+}
+
+func TestNormalize_PreservesMergeBody(t *testing.T) {
+	raw := "Merge branch 'side' into main\n\nA long line in a merge body that nobody should be rewrapping at all.\n"
+	got, _, err := Normalize(raw, DefaultOptions())
+	if err != nil {
+		t.Fatalf("Normalize: %v", err)
+	}
+	if got != raw {
+		t.Errorf("Normalize = %q, want %q", got, raw)
+	}
+}

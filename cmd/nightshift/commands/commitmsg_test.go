@@ -155,3 +155,46 @@ func TestCommitMsgCmd_EndToEnd(t *testing.T) {
 		t.Errorf("fixed file = %q", string(got))
 	}
 }
+
+func TestRunCommitMsg_AcceptsGitGeneratedMessages(t *testing.T) {
+	for _, raw := range []string{
+		"Merge branch 'side'\n",
+		"Merge branch 'side'\n\n# Conflicts:\n#\tfile.go\n",
+		"Revert \"feat(cli): add commit message normalizer\"\n\nThis reverts commit deadbeef.\n",
+		"fixup! feat(cli): add commit message normalizer\n",
+		"squash! feat(cli): add commit message normalizer\n",
+		"amend! feat(cli): add commit message normalizer\n",
+	} {
+		path := writeTempMsg(t, raw)
+		var out, errBuf bytes.Buffer
+		if err := runCommitMsg(path, &commitMsgOptions{check: true}, strings.NewReader(""), &out, &errBuf); err != nil {
+			t.Errorf("check %q: %v\nstderr: %s", raw, err, errBuf.String())
+		}
+	}
+}
+
+func TestRunCommitMsg_FixLeavesGitGeneratedAlone(t *testing.T) {
+	raw := "Merge branch 'side' into main\n"
+	path := writeTempMsg(t, raw)
+	var out, errBuf bytes.Buffer
+	if err := runCommitMsg(path, &commitMsgOptions{fix: true}, strings.NewReader(""), &out, &errBuf); err != nil {
+		t.Fatalf("fix: %v\nstderr: %s", err, errBuf.String())
+	}
+	got, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("reading file: %v", err)
+	}
+	if string(got) != raw {
+		t.Errorf("fixed file = %q, want it unchanged", string(got))
+	}
+}
+
+func TestRunCommitMsg_PrintSpecMentionsGitGeneratedExemption(t *testing.T) {
+	var out, errBuf bytes.Buffer
+	if err := runCommitMsg("-", &commitMsgOptions{printSpec: true}, strings.NewReader(""), &out, &errBuf); err != nil {
+		t.Fatalf("print-spec: %v", err)
+	}
+	if !strings.Contains(out.String(), "fixup! ") || !strings.Contains(out.String(), "Merge ") {
+		t.Errorf("spec does not document the git-generated exemption:\n%s", out.String())
+	}
+}

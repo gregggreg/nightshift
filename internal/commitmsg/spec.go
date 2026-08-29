@@ -70,6 +70,9 @@ Rules
   - body paragraphs wrap at %d columns; code blocks, indented text, lists
     and URLs are left alone
   - trailers form one block at the very end, one "Key: value" per line
+  - messages git writes itself are exempt: headers starting with 'Merge ',
+    'Revert "', 'fixup! ', 'squash! ' or 'amend! ' are always accepted, so
+    merges and rebase --autosquash are never blocked
 
 Example
   feat(cli): add commit message normalizer

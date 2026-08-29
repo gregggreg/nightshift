@@ -65,6 +65,11 @@ type Message struct {
 	Body     string
 	Trailers []Trailer
 
+	// GitGenerated marks a message git wrote itself — a merge, a revert, or a
+	// fixup!/squash!/amend! commit. Those headers are fixed by git and are
+	// exempt from every rule below.
+	GitGenerated bool
+
 	// rawHeader is the header line exactly as written, used to report issues
 	// about headers that do not match the conventional format at all.
 	rawHeader string
@@ -99,7 +104,19 @@ var (
 	// Git trailer syntax: "Token: value", token may contain letters, digits
 	// and hyphens. "BREAKING CHANGE" is allowed as a special case.
 	trailerRe = regexp.MustCompile(`^(BREAKING CHANGE|[A-Za-z][A-Za-z0-9-]*):[ \t]+(.*\S)[ \t]*$`)
+	// Headers git generates on the user's behalf. Enforcing the conventional
+	// format on these would break `git merge --no-ff` (which aborts mid-merge
+	// when commit-msg fails) and every `git commit --fixup`/`--squash`, and so
+	// `git rebase --autosquash`.
+	gitGeneratedRe = regexp.MustCompile(`^(Merge |Revert "|fixup! |squash! |amend! )`)
 )
+
+// IsGitGenerated reports whether a header line was written by git itself —
+// a merge, a revert, or a fixup!/squash!/amend! commit — and is therefore
+// exempt from the commit format.
+func IsGitGenerated(header string) bool {
+	return gitGeneratedRe.MatchString(header)
+}
 
 // knownTrailerKeys are hoisted out of the body even when they appear in the
 // middle of a message, so every message ends with one trailer block.
@@ -131,7 +148,7 @@ func Parse(raw string) (*Message, error) {
 		return nil, ErrEmptyMessage
 	}
 
-	m := &Message{rawHeader: lines[0]}
+	m := &Message{rawHeader: lines[0], GitGenerated: IsGitGenerated(lines[0])}
 	if match := headerRe.FindStringSubmatch(lines[0]); match != nil {
 		m.Type = match[1]
 		m.Scope = match[2]
@@ -271,6 +288,12 @@ func Validate(m *Message) []Issue { return ValidateWithOptions(m, DefaultOptions
 // ValidateWithOptions checks the message against opts and returns every
 // issue found, errors and warnings alike.
 func ValidateWithOptions(m *Message, opts Options) []Issue {
+	// Git writes merge, revert and fixup!/squash!/amend! headers itself; the
+	// user cannot choose their format, so there is nothing to enforce.
+	if m.GitGenerated {
+		return nil
+	}
+
 	var issues []Issue
 	add := func(line int, sev Severity, rule, format string, args ...interface{}) {
 		issues = append(issues, Issue{Line: line, Severity: sev, Rule: rule, Message: fmt.Sprintf(format, args...)})
@@ -366,6 +389,10 @@ func Normalize(raw string, opts Options) (string, []Issue, error) {
 	m, err := Parse(raw)
 	if err != nil {
 		return "", nil, err
+	}
+	if m.GitGenerated {
+		// Nothing to rewrite: only git's comments and verbose diff are dropped.
+		return strings.Join(cleanLines(raw), "\n") + "\n", nil, nil
 	}
 	if strings.TrimSpace(m.Subject) == "" {
 		return "", nil, errors.New("commit message has no subject")
