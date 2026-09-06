@@ -1,0 +1,36 @@
+name: Commit Lint
+
+on:
+  pull_request:
+
+jobs:
+  commit-lint:
+    name: Commit messages
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run commit-message test suite
+        run: ./tests/commit-msg-test.sh
+
+      - name: Validate commit subjects added by this PR
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          status=0
+          while IFS= read -r subject; do
+            [ -n "$subject" ] || continue
+            if ! ./scripts/validate-commit-msg.sh --subject "$subject"; then
+              status=1
+            fi
+          done < <(git log --no-merges --pretty=%s "$BASE_SHA..$HEAD_SHA")
+          if [ "$status" -ne 0 ]; then
+            echo "::error::One or more commit subjects do not follow docs/commit-conventions.md"
+            exit 1
+          fi
+          echo "All commit subjects follow docs/commit-conventions.md"

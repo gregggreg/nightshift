@@ -258,18 +258,62 @@ Each task has a default cooldown interval to prevent the same task from running 
 
 ## Development
 
-### Pre-commit hooks
+### Git hooks and commit messages
 
-Install the git pre-commit hook to catch formatting and vet issues before pushing:
+Hook installation is opt-in. Enable the repository-managed hooks with:
 
 ```bash
 make install-hooks
+# Equivalent command:
+git config core.hooksPath .githooks
 ```
 
-This symlinks `scripts/pre-commit.sh` into `.git/hooks/pre-commit`. The hook runs:
+The `pre-commit` hook runs:
 - **gofmt** — flags any staged `.go` files that need formatting
 - **go vet** — catches common correctness issues
 - **go build** — ensures the project compiles
+
+The `commit-msg` hook normalizes the message in place and then validates it
+against [Conventional Commits](docs/commit-conventions.md):
+
+```text
+type(scope)!: summary
+```
+
+Supported types are `build`, `chore`, `ci`, `docs`, `feat`, `fix`, `perf`,
+`refactor`, `revert`, `style`, and `test`. The scope and the `!` breaking-change
+marker are optional. Subjects are limited to 72 characters, use the imperative
+mood, start lowercase, and carry no trailing period.
+
+Normalization only rewrites what is mechanically safe — whitespace, the casing
+of a recognized type, a trailing period, and the blank line between subject and
+body. It never invents a type unless you explicitly run
+`scripts/normalize-commit-msg.sh --infer`. Anything it cannot fix is reported by
+`scripts/validate-commit-msg.sh` with one line per violated rule.
+
+Merge and revert messages, `fixup!`, `squash!`, and `amend!` commits, stash
+subjects, and comment-only templates are never rewritten or rejected. Comment
+lines are recognized using your configured `core.commentString` or
+`core.commentChar`, defaulting to `#`. Everything from git's scissors marker
+(`git commit -v`) onward is left byte-for-byte untouched.
+
+Examples:
+
+```text
+feat(run): add pause command
+fix(config)!: reject unknown provider keys
+docs: explain hook installation
+```
+
+Run the shell regression suite directly with:
+
+```bash
+make test-commit-msg
+```
+
+CI enforces the same rules on every commit a pull request adds, so contributors
+who skip the hooks still get the check. See
+[docs/commit-conventions.md](docs/commit-conventions.md) for the full reference.
 
 To bypass in a pinch: `git commit --no-verify`
 

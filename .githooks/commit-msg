@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+#
+# Normalize the commit message in place, then validate it. Fixable problems are
+# corrected silently; only unfixable ones reject the commit.
+set -euo pipefail
+
+repo_root=$(git rev-parse --show-toplevel)
+"$repo_root/scripts/normalize-commit-msg.sh" "$1"
+exec "$repo_root/scripts/validate-commit-msg.sh" "$1"
