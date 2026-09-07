@@ -409,7 +409,7 @@ func (c *Claude) scanTokensSince(cutoffDate string, extraMtimeDays int) (int64, 
 		// mtime filter: skip files not modified since cutoff
 		info, err := d.Info()
 		if err != nil {
-			return nil // skip unreadable
+			return nil //nolint:nilerr // skip unreadable entry so one bad file cannot abort the scan
 		}
 		if info.ModTime().Before(mtimeCutoff) {
 			return nil
@@ -417,7 +417,7 @@ func (c *Claude) scanTokensSince(cutoffDate string, extraMtimeDays int) (int64, 
 
 		tokens, err := scanFileTokens(path, cutoffDate)
 		if err != nil {
-			return nil // skip corrupt files
+			return nil //nolint:nilerr // skip corrupt transcript so one bad file cannot abort the scan
 		}
 		total += tokens
 		return nil

@@ -46,7 +46,7 @@ func (r *TDReader) Enabled() bool {
 func (r *TDReader) Read(ctx context.Context, projectPath string) (*Result, error) {
 	// Check if td is available
 	if _, err := exec.LookPath("td"); err != nil {
-		return nil, nil // td not installed, not an error
+		return nil, nil //nolint:nilerr // td CLI absent means the integration is unavailable, not failed
 	}
 
 	result := &Result{
@@ -59,7 +59,7 @@ func (r *TDReader) Read(ctx context.Context, projectPath string) (*Result, error
 	tasks, err := r.listTasks(ctx, projectPath)
 	if err != nil {
 		// td might not be configured for this project
-		return nil, nil
+		return nil, nil //nolint:nilerr // td not initialised for this project; degrade to no tasks
 	}
 
 	result.Tasks = tasks

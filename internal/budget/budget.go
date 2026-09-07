@@ -362,7 +362,7 @@ func (m *Manager) DaysUntilWeeklyReset(provider string) (int, error) {
 		}
 		resetTime, err := m.codex.GetResetTime("weekly")
 		if err != nil {
-			return 7, nil // Fallback on error
+			return 7, nil //nolint:nilerr // best-effort quota lookup; fall back to the nominal reset window
 		}
 		if resetTime.IsZero() {
 			return 7, nil // No reset time available
@@ -383,7 +383,7 @@ func (m *Manager) DaysUntilWeeklyReset(provider string) (int, error) {
 		}
 		resetTime, err := m.copilot.GetResetTime("weekly")
 		if err != nil {
-			return 30, nil // Fallback on error
+			return 30, nil //nolint:nilerr // best-effort quota lookup; fall back to the nominal reset window
 		}
 		if resetTime.IsZero() {
 			return 30, nil // No reset time available

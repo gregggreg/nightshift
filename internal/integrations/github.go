@@ -48,7 +48,7 @@ func (r *GitHubReader) Enabled() bool {
 func (r *GitHubReader) Read(ctx context.Context, projectPath string) (*Result, error) {
 	// Check if gh is available
 	if _, err := exec.LookPath("gh"); err != nil {
-		return nil, nil // gh not installed, not an error
+		return nil, nil //nolint:nilerr // gh CLI absent means the integration is unavailable, not failed
 	}
 
 	// Check if we're in a git repo with GitHub remote
@@ -66,7 +66,7 @@ func (r *GitHubReader) Read(ctx context.Context, projectPath string) (*Result, e
 	issues, err := r.listIssues(ctx, projectPath)
 	if err != nil {
 		// GitHub might not be configured or no issues
-		return nil, nil
+		return nil, nil //nolint:nilerr // issues disabled or gh unauthenticated; degrade to no tasks
 	}
 
 	result.Tasks = issues
