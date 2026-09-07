@@ -36,7 +36,7 @@ var setupCmd = &cobra.Command{
 
 Creates/updates the global config, validates providers, runs a snapshot, previews the next run,
 and optionally installs/enables the daemon.`,
-	RunE: func(cmd *cobra.Command, args []string) error {
+	RunE: func(_ *cobra.Command, _ []string) error {
 		model, err := newSetupModel()
 		if err != nil {
 			return err
@@ -1911,11 +1911,11 @@ func uninstallService(service string) error {
 
 func mustExecutablePath() string {
 	path, _ := os.Executable()
-	real, err := filepath.EvalSymlinks(path)
+	resolved, err := filepath.EvalSymlinks(path)
 	if err != nil {
 		return path
 	}
-	return real
+	return resolved
 }
 
 func writeGlobalConfig(cfg *config.Config) error {

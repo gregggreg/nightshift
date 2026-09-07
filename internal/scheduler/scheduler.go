@@ -457,7 +457,7 @@ func (s *Scheduler) ScheduleCron(expr string, job func()) error {
 	if err := s.SetCron(expr); err != nil {
 		return err
 	}
-	s.AddJob(func(ctx context.Context) error {
+	s.AddJob(func(_ context.Context) error {
 		job()
 		return nil
 	})
@@ -469,7 +469,7 @@ func (s *Scheduler) ScheduleInterval(d time.Duration, job func()) error {
 	if err := s.SetInterval(d); err != nil {
 		return err
 	}
-	s.AddJob(func(ctx context.Context) error {
+	s.AddJob(func(_ context.Context) error {
 		job()
 		return nil
 	})
@@ -478,7 +478,7 @@ func (s *Scheduler) ScheduleInterval(d time.Duration, job func()) error {
 
 // Schedule adds a one-time job to run at the specified time.
 func (s *Scheduler) Schedule(at time.Time, job func()) {
-	s.AddJob(func(ctx context.Context) error {
+	s.AddJob(func(_ context.Context) error {
 		if time.Now().After(at) {
 			job()
 		}

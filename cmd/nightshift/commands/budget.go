@@ -21,7 +21,7 @@ var budgetCmd = &cobra.Command{
 	Long: `Display current budget status and usage.
 
 Shows spending across all providers or a specific provider.`,
-	RunE: func(cmd *cobra.Command, args []string) error {
+	RunE: func(cmd *cobra.Command, _ []string) error {
 		provider, _ := cmd.Flags().GetString("provider")
 		return runBudget(provider)
 	},

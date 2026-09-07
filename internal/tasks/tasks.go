@@ -36,7 +36,7 @@ func (c CostTier) String() string {
 }
 
 // TokenRange returns the min and max estimated tokens for this tier.
-func (c CostTier) TokenRange() (min, max int) {
+func (c CostTier) TokenRange() (minTokens, maxTokens int) {
 	switch c {
 	case CostLow:
 		return 10_000, 50_000
@@ -242,7 +242,7 @@ func DefaultIntervalForCategory(cat TaskCategory) time.Duration {
 }
 
 // EstimatedTokens returns the token range for this task definition.
-func (d TaskDefinition) EstimatedTokens() (min, max int) {
+func (d TaskDefinition) EstimatedTokens() (minTokens, maxTokens int) {
 	return d.CostTier.TokenRange()
 }
 
@@ -856,13 +856,13 @@ func GetDefinition(taskType TaskType) (TaskDefinition, error) {
 }
 
 // GetCostEstimate returns the estimated token cost range for a task type.
-func GetCostEstimate(taskType TaskType) (min, max int, err error) {
+func GetCostEstimate(taskType TaskType) (minTokens, maxTokens int, err error) {
 	def, err := GetDefinition(taskType)
 	if err != nil {
 		return 0, 0, err
 	}
-	min, max = def.EstimatedTokens()
-	return min, max, nil
+	minTokens, maxTokens = def.EstimatedTokens()
+	return minTokens, maxTokens, nil
 }
 
 // GetTasksByCategory returns all task definitions in a category.
@@ -996,7 +996,7 @@ func NewQueue() *Queue {
 }
 
 // Add queues a task.
-func (q *Queue) Add(t Task) {
+func (q *Queue) Add(t Task) { //nolint:revive // unimplemented stub; the parameter documents the intended signature
 	// TODO: Implement
 }
 

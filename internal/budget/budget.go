@@ -456,7 +456,7 @@ func NewTracker(limitCents int64) *Tracker {
 }
 
 // Record logs spending for a provider.
-func (t *Tracker) Record(provider string, tokens int, costCents int64) {
+func (t *Tracker) Record(provider string, tokens int, costCents int64) { //nolint:revive // Tracker is deprecated; the token count is part of its published signature but only cost is recorded
 	t.spent[provider] += costCents
 }
 

@@ -348,7 +348,7 @@ func renderDiagnosticsText(b *strings.Builder, styles previewStyles, diagnostics
 	renderCooldownsText(b, styles, diagnostics.Cooldowns, indent)
 }
 
-func renderCooldownsText(b *strings.Builder, styles previewStyles, cooldowns []previewCooldownEntry, indent string) {
+func renderCooldownsText(b *strings.Builder, _ previewStyles, cooldowns []previewCooldownEntry, indent string) {
 	if len(cooldowns) == 0 {
 		return
 	}

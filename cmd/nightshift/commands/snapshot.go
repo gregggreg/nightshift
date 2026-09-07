@@ -32,7 +32,7 @@ display via tmux to get the provider's own usage percentage.
 
   Inference    If both local tokens and scraped % are available, nightshift
                infers the weekly budget: budget = local_tokens / (scraped% / 100).`,
-	RunE: func(cmd *cobra.Command, args []string) error {
+	RunE: func(cmd *cobra.Command, _ []string) error {
 		provider, _ := cmd.Flags().GetString("provider")
 		localOnly, _ := cmd.Flags().GetBool("local-only")
 		return runBudgetSnapshot(cmd, provider, localOnly)
@@ -43,7 +43,7 @@ var budgetHistoryCmd = &cobra.Command{
 	Use:   "history",
 	Short: "Show recent budget snapshots",
 	Long:  `Show recent usage snapshots for budget calibration.`,
-	RunE: func(cmd *cobra.Command, args []string) error {
+	RunE: func(cmd *cobra.Command, _ []string) error {
 		provider, _ := cmd.Flags().GetString("provider")
 		n, _ := cmd.Flags().GetInt("n")
 		return runBudgetHistory(provider, n)
@@ -54,7 +54,7 @@ var budgetCalibrateCmd = &cobra.Command{
 	Use:   "calibrate",
 	Short: "Show calibration status",
 	Long:  `Show inferred budget calibration status for providers.`,
-	RunE: func(cmd *cobra.Command, args []string) error {
+	RunE: func(cmd *cobra.Command, _ []string) error {
 		provider, _ := cmd.Flags().GetString("provider")
 		return runBudgetCalibrate(provider)
 	},

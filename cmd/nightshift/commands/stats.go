@@ -24,7 +24,7 @@ var statsCmd = &cobra.Command{
 
 Shows run counts, task outcomes, token usage, budget projections,
 and per-project breakdowns. Use --json for machine-readable output.`,
-	RunE: func(cmd *cobra.Command, args []string) error {
+	RunE: func(cmd *cobra.Command, _ []string) error {
 		jsonOutput, _ := cmd.Flags().GetBool("json")
 		period, _ := cmd.Flags().GetString("period")
 		return runStats(jsonOutput, period)

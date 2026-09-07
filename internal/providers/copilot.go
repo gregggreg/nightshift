@@ -56,7 +56,7 @@ func (c *Copilot) Name() string {
 
 // Execute runs a task via GitHub Copilot CLI.
 // Implementation note: GitHub Copilot CLI uses 'gh copilot' commands.
-func (c *Copilot) Execute(ctx context.Context, task Task) (Result, error) {
+func (c *Copilot) Execute(_ context.Context, _ Task) (Result, error) {
 	// TODO: Implement - spawn gh copilot CLI process
 	// According to GitHub docs, commands are:
 	// - gh copilot explain <code>

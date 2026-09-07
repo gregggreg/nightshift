@@ -117,7 +117,7 @@ func init() {
 	rootCmd.AddCommand(runCmd)
 }
 
-func runRun(cmd *cobra.Command, args []string) error {
+func runRun(cmd *cobra.Command, _ []string) error {
 	dryRun, _ := cmd.Flags().GetBool("dry-run")
 	projectPath, _ := cmd.Flags().GetString("project")
 	taskFilter, _ := cmd.Flags().GetString("task")

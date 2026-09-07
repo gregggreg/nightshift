@@ -47,7 +47,7 @@ var reportCmd = &cobra.Command{
 	Long: `View structured reports from recent nightshift runs.
 
 By default, shows a polished overview of what happened during the last night.`,
-	RunE: func(cmd *cobra.Command, args []string) error {
+	RunE: func(cmd *cobra.Command, _ []string) error {
 		opts := reportOptions{}
 		opts.reportType, _ = cmd.Flags().GetString("report")
 		opts.period, _ = cmd.Flags().GetString("period")

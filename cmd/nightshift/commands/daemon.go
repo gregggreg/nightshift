@@ -130,7 +130,7 @@ func isDaemonRunning() (bool, int) {
 	return isProcessRunning(pid), pid
 }
 
-func runDaemonStart(cmd *cobra.Command, args []string) error {
+func runDaemonStart(_ *cobra.Command, _ []string) error {
 	// Check if already running
 	if running, pid := isDaemonRunning(); running {
 		return fmt.Errorf("daemon already running (pid %d)", pid)
@@ -588,7 +588,7 @@ func takeSnapshot(ctx context.Context, cfg *config.Config, database *db.DB, log 
 	}
 }
 
-func pruneSnapshots(ctx context.Context, cfg *config.Config, database *db.DB, log *logging.Logger) {
+func pruneSnapshots(_ context.Context, cfg *config.Config, database *db.DB, log *logging.Logger) {
 	collector := snapshots.NewCollector(database, nil, nil, nil, nil, weekStartDayFromConfig(cfg))
 	deleted, err := collector.Prune(cfg.Budget.SnapshotRetentionDays)
 	if err != nil {
@@ -612,7 +612,7 @@ func weekStartDayFromConfig(cfg *config.Config) time.Weekday {
 	}
 }
 
-func runDaemonStop(cmd *cobra.Command, args []string) error {
+func runDaemonStop(_ *cobra.Command, _ []string) error {
 	running, pid := isDaemonRunning()
 	if !running {
 		// Check if PID file exists but process is dead
@@ -660,7 +660,7 @@ func runDaemonStop(cmd *cobra.Command, args []string) error {
 	}
 }
 
-func runDaemonStatus(cmd *cobra.Command, args []string) error {
+func runDaemonStatus(_ *cobra.Command, _ []string) error {
 	running, pid := isDaemonRunning()
 
 	if !running {
