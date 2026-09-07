@@ -1,0 +1,66 @@
+version: "2"
+
+run:
+  timeout: 8m
+
+linters:
+  default: standard
+  enable:
+    # standard set (errcheck, govet, ineffassign, staticcheck, unused) plus:
+    - errorlint    # error comparisons/assertions that break under wrapping
+    - nilerr       # returning nil when a non-nil error is in hand
+    - gocritic     # opinionated but high-signal style/perf diagnostics
+    - revive       # doc comments, shadowed builtins, unused params
+    - unconvert    # redundant type conversions
+    - misspell     # typos in comments and strings
+    - bodyclose    # unclosed HTTP response bodies
+
+  settings:
+    revive:
+      rules:
+        - name: blank-imports
+        - name: context-as-argument
+        - name: context-keys-type
+        - name: dot-imports
+        - name: error-return
+        - name: error-strings
+        - name: error-naming
+        - name: exported
+        - name: increment-decrement
+        - name: var-naming
+        - name: package-comments
+        - name: range
+        - name: receiver-naming
+        - name: time-naming
+        - name: indent-error-flow
+        - name: errorf
+        - name: redefines-builtin-id
+        - name: unused-parameter
+        - name: unreachable-code
+        - name: superfluous-else
+
+  exclusions:
+    rules:
+      # Mock and fake implementations must match interface signatures, so their
+      # parameters are structurally required even when unused. Renaming them all
+      # to `_` would make the test doubles harder to read, not easier.
+      - path: _test\.go
+        linters:
+          - revive
+        text: "unused-parameter"
+
+      # stats.StatsResult trips revive's stutter check. Renaming an exported type
+      # is a cross-package API break and does not belong in a lint-only change;
+      # it should be done deliberately in its own commit.
+      - path: internal/stats/
+        linters:
+          - revive
+        text: "type name will be used as stats.StatsResult by other packages"
+
+formatters:
+  enable:
+    - gofmt
+
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0
