@@ -12,6 +12,7 @@ import (
 // Preset identifies a task selection profile (safe, balanced, aggressive).
 type Preset string
 
+// Available task selection presets, ordered from most to least conservative.
 const (
 	PresetBalanced   Preset = "balanced"
 	PresetSafe       Preset = "safe"

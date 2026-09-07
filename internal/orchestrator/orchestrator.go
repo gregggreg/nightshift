@@ -29,6 +29,7 @@ const (
 // TaskStatus represents the outcome of task execution.
 type TaskStatus string
 
+// Task statuses, covering the lifecycle from pending through a terminal outcome.
 const (
 	StatusPending   TaskStatus = "pending"
 	StatusPlanning  TaskStatus = "planning"
@@ -113,7 +114,7 @@ func DefaultConfig() Config {
 // Orchestrator manages agent execution using plan-implement-review loop.
 type Orchestrator struct {
 	agent        agents.Agent
-	budget       *budget.Tracker
+	budget       *budget.Tracker //nolint:staticcheck // SA1019: dead scaffolding, never read; migrating to budget.Manager is a separate API change
 	queue        *tasks.Queue
 	config       Config
 	logger       *logging.Logger
@@ -132,7 +133,7 @@ func WithAgent(a agents.Agent) Option {
 }
 
 // WithBudget sets the budget tracker.
-func WithBudget(b *budget.Tracker) Option {
+func WithBudget(b *budget.Tracker) Option { //nolint:staticcheck // SA1019: no call sites; migrating to budget.Manager is a separate API change
 	return func(o *Orchestrator) {
 		o.budget = b
 	}

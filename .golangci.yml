@@ -49,13 +49,14 @@ linters:
           - revive
         text: "unused-parameter"
 
-      # stats.StatsResult trips revive's stutter check. Renaming an exported type
-      # is a cross-package API break and does not belong in a lint-only change;
-      # it should be done deliberately in its own commit.
-      - path: internal/stats/
+      # stats.StatsResult, budget.BudgetEstimate and budget.BudgetSource trip
+      # revive's stutter check. Renaming an exported type is a cross-package API
+      # break (15 call sites across the repo) and does not belong in a lint-only
+      # change; each should be done deliberately in its own commit.
+      - path: (internal/stats/|internal/budget/)
         linters:
           - revive
-        text: "type name will be used as stats.StatsResult by other packages"
+        text: "and that stutters"
 
 formatters:
   enable:

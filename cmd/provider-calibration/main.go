@@ -1,3 +1,5 @@
+// Command provider-calibration measures real token usage for each provider
+// so budget estimates can be calibrated against observed transcripts.
 package main
 
 import (

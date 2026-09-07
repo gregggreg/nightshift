@@ -1,4 +1,5 @@
 // copilot.go implements the Provider interface for GitHub Copilot CLI.
+
 package providers
 
 import (

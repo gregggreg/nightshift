@@ -14,6 +14,7 @@ import (
 // AuditEventType categorizes audit events.
 type AuditEventType string
 
+// Audit event types recorded to the audit log.
 const (
 	AuditAgentStart     AuditEventType = "agent_start"
 	AuditAgentComplete  AuditEventType = "agent_complete"

@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	_ "modernc.org/sqlite"
+	_ "modernc.org/sqlite" // registers the pure-Go SQLite driver used by sql.Open below
 )
 
 // DB wraps the SQLite connection and path.

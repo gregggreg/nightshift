@@ -12,6 +12,7 @@ import (
 // CostTier represents the estimated token cost for a task.
 type CostTier int
 
+// Cost tiers, ordered from cheapest to most expensive.
 const (
 	CostLow      CostTier = iota // 10-50k tokens
 	CostMedium                   // 50-150k tokens
@@ -54,6 +55,7 @@ func (c CostTier) TokenRange() (minTokens, maxTokens int) {
 // RiskLevel represents the risk associated with a task.
 type RiskLevel int
 
+// Risk levels, ordered from least to most risky.
 const (
 	RiskLow RiskLevel = iota
 	RiskMedium
