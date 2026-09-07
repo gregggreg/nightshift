@@ -99,13 +99,14 @@ func runBudgetSnapshot(cmd *cobra.Command, filterProvider string, localOnly bool
 	// Determine scraper availability and reason if disabled
 	scraper := snapshots.UsageScraper(nil)
 	scrapeDisabledReason := ""
-	if localOnly {
+	switch {
+	case localOnly:
 		scrapeDisabledReason = "--local-only flag set"
-	} else if !cfg.Budget.CalibrateEnabled {
+	case !cfg.Budget.CalibrateEnabled:
 		scrapeDisabledReason = "calibrate_enabled is false in config"
-	} else if strings.EqualFold(cfg.Budget.BillingMode, "api") {
+	case strings.EqualFold(cfg.Budget.BillingMode, "api"):
 		scrapeDisabledReason = "billing_mode is 'api' (scraping only works with subscription)"
-	} else {
+	default:
 		scraper = tmuxScraper{}
 	}
 
@@ -144,17 +145,18 @@ func runBudgetSnapshot(cmd *cobra.Command, filterProvider string, localOnly bool
 		fmt.Printf("  Data source:  %s\n", dataSource)
 
 		// Scraping status
-		if scraper == nil {
+		switch {
+		case scraper == nil:
 			fmt.Printf("  Scraping:     disabled -- %s\n", scrapeDisabledReason)
-		} else if snapshot.ScrapeErr != nil {
+		case snapshot.ScrapeErr != nil:
 			fmt.Printf("  Scraping:     FAILED -- %v\n", snapshot.ScrapeErr)
-		} else if snapshot.ScrapedPct != nil {
+		case snapshot.ScrapedPct != nil:
 			cmd := "/usage"
 			if provName == "codex" {
 				cmd = "/status"
 			}
 			fmt.Printf("  Scraped:      %.1f%% used (via tmux %s)\n", *snapshot.ScrapedPct, cmd)
-		} else {
+		default:
 			fmt.Printf("  Scraping:     no data returned\n")
 		}
 

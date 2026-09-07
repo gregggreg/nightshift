@@ -565,22 +565,24 @@ func takeSnapshot(ctx context.Context, cfg *config.Config, database *db.DB, log 
 
 	if cfg.Providers.Claude.Enabled {
 		snapshot, err := collector.TakeSnapshot(ctx, "claude")
-		if err != nil {
+		switch {
+		case err != nil:
 			log.Warnf("snapshot claude: %v", err)
-		} else if snapshot.ScrapedPct != nil {
+		case snapshot.ScrapedPct != nil:
 			log.Infof("snapshot claude: %.1f%%", *snapshot.ScrapedPct)
-		} else {
+		default:
 			log.Info("snapshot claude: local-only")
 		}
 	}
 
 	if cfg.Providers.Codex.Enabled {
 		snapshot, err := collector.TakeSnapshot(ctx, "codex")
-		if err != nil {
+		switch {
+		case err != nil:
 			log.Warnf("snapshot codex: %v", err)
-		} else if snapshot.ScrapedPct != nil {
+		case snapshot.ScrapedPct != nil:
 			log.Infof("snapshot codex: %.1f%%", *snapshot.ScrapedPct)
-		} else {
+		default:
 			log.Info("snapshot codex: local-only")
 		}
 	}

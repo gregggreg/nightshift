@@ -313,7 +313,8 @@ func renderStatsHuman(result *stats.StatsResult) error {
 				fmt.Printf("    Reset:      %s\n", bp.ResetHint)
 			}
 
-			if bp.EstExhaustAt != nil {
+			switch {
+			case bp.EstExhaustAt != nil:
 				if time.Until(*bp.EstExhaustAt) <= 0 {
 					fmt.Printf("    Projected:  budget may already be exhausted\n")
 				} else {
@@ -326,11 +327,9 @@ func renderStatsHuman(result *stats.StatsResult) error {
 						}
 					}
 				}
-			} else if bp.RemainingTokens <= 0 {
-				fmt.Printf("    At current rate: budget may be exhausted\n")
-			} else if bp.EstDaysRemaining > 0 {
+			case bp.EstDaysRemaining > 0 && bp.RemainingTokens > 0:
 				fmt.Printf("    At current rate: ~%d days until budget exhausted\n", bp.EstDaysRemaining)
-			} else {
+			default:
 				fmt.Printf("    At current rate: budget may be exhausted\n")
 			}
 

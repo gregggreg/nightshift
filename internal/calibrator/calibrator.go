@@ -130,11 +130,12 @@ func (c *Calibrator) Calibrate(provider string) (CalibrationResult, error) {
 			confidence = "low"
 		}
 	default:
-		if cv <= 0.10 {
+		switch {
+		case cv <= 0.10:
 			confidence = "high"
-		} else if cv <= 0.15 {
+		case cv <= 0.15:
 			confidence = "medium"
-		} else {
+		default:
 			confidence = "low"
 		}
 	}

@@ -895,16 +895,17 @@ func renderReportBudget(styles reportStyles, runs []reportRun) string {
 		b.WriteString(styles.Accent.Render(header))
 		b.WriteString("\n")
 
-		if summary.BudgetStart > 0 {
+		switch {
+		case summary.BudgetStart > 0:
 			fmt.Fprintf(&b, "  %s %s used / %s start (%s remaining)\n",
 				styles.Label.Render("Budget:"),
 				formatTokensCompact(summary.TokensUsed),
 				formatTokensCompact(summary.BudgetStart),
 				formatTokensCompact(summary.BudgetRemaining),
 			)
-		} else if summary.TokensUsed > 0 {
+		case summary.TokensUsed > 0:
 			fmt.Fprintf(&b, "  %s %s\n", styles.Label.Render("Tokens:"), formatTokensCompact(summary.TokensUsed))
-		} else {
+		default:
 			b.WriteString("  No budget data recorded\n")
 		}
 

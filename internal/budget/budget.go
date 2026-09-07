@@ -438,6 +438,7 @@ func (m *Manager) CanRun(provider string, estimatedTokens int64) (bool, error) {
 }
 
 // Tracker provides backward compatibility for tracking actual spend.
+//
 // Deprecated: Use Manager for budget calculations.
 type Tracker struct {
 	spent map[string]int64
@@ -445,6 +446,7 @@ type Tracker struct {
 }
 
 // NewTracker creates a budget tracker with the given limit.
+//
 // Deprecated: Use NewManager instead.
 func NewTracker(limitCents int64) *Tracker {
 	return &Tracker{

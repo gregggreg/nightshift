@@ -1507,11 +1507,12 @@ func renderEnvChecks(cfg *config.Config) string {
 	// Check for Copilot CLI (gh or copilot binary)
 	_, ghErr := execLookPath("gh")
 	_, copilotErr := execLookPath("copilot")
-	if ghErr != nil && copilotErr != nil {
+	switch {
+	case ghErr != nil && copilotErr != nil:
 		fmt.Fprintf(&b, "  %s %s\n", styleWarn.Render("Note:"), "Copilot CLI not found (install via 'gh' or native 'copilot')")
-	} else if ghErr == nil {
+	case ghErr == nil:
 		fmt.Fprintf(&b, "  %s %s\n", styleOk.Render("OK:"), "gh CLI available (use 'gh copilot')")
-	} else {
+	default:
 		fmt.Fprintf(&b, "  %s %s\n", styleOk.Render("OK:"), "copilot CLI available")
 	}
 	if cfg.Providers.Claude.Enabled {
