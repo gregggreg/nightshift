@@ -17,7 +17,7 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.23'
+          go-version: '1.24'
 
       - name: Download dependencies
         run: go mod download
@@ -44,9 +44,11 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.23'
+          go-version: '1.24'
 
       - name: Run golangci-lint
-        uses: golangci/golangci-lint-action@v6
+        # v8+ is required: .golangci.yml uses the golangci-lint v2 config schema
+        # (version: "2", linters.settings, formatters), which v1 cannot parse.
+        uses: golangci/golangci-lint-action@v8
         with:
-          version: latest
+          version: v2.12.2
