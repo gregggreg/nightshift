@@ -17,7 +17,7 @@ func TestValidate_CronAndInterval(t *testing.T) {
 		},
 	}
 	err := Validate(cfg)
-	if err != ErrCronAndInterval {
+	if !errors.Is(err, ErrCronAndInterval) {
 		t.Errorf("expected ErrCronAndInterval, got %v", err)
 	}
 }
@@ -29,7 +29,7 @@ func TestValidate_InvalidBudgetMode(t *testing.T) {
 		},
 	}
 	err := Validate(cfg)
-	if err != ErrInvalidBudgetMode {
+	if !errors.Is(err, ErrInvalidBudgetMode) {
 		t.Errorf("expected ErrInvalidBudgetMode, got %v", err)
 	}
 }
@@ -41,7 +41,7 @@ func TestValidate_InvalidBillingMode(t *testing.T) {
 		},
 	}
 	err := Validate(cfg)
-	if err != ErrInvalidBillingMode {
+	if !errors.Is(err, ErrInvalidBillingMode) {
 		t.Errorf("expected ErrInvalidBillingMode, got %v", err)
 	}
 }
@@ -53,7 +53,7 @@ func TestValidate_InvalidWeekStartDay(t *testing.T) {
 		},
 	}
 	err := Validate(cfg)
-	if err != ErrInvalidWeekStartDay {
+	if !errors.Is(err, ErrInvalidWeekStartDay) {
 		t.Errorf("expected ErrInvalidWeekStartDay, got %v", err)
 	}
 }
@@ -65,7 +65,7 @@ func TestValidate_InvalidMaxPercent(t *testing.T) {
 		},
 	}
 	err := Validate(cfg)
-	if err != ErrInvalidMaxPercent {
+	if !errors.Is(err, ErrInvalidMaxPercent) {
 		t.Errorf("expected ErrInvalidMaxPercent, got %v", err)
 	}
 }
@@ -77,7 +77,7 @@ func TestValidate_InvalidLogLevel(t *testing.T) {
 		},
 	}
 	err := Validate(cfg)
-	if err != ErrInvalidLogLevel {
+	if !errors.Is(err, ErrInvalidLogLevel) {
 		t.Errorf("expected ErrInvalidLogLevel, got %v", err)
 	}
 }
@@ -89,7 +89,7 @@ func TestValidate_InvalidLogFormat(t *testing.T) {
 		},
 	}
 	err := Validate(cfg)
-	if err != ErrInvalidLogFormat {
+	if !errors.Is(err, ErrInvalidLogFormat) {
 		t.Errorf("expected ErrInvalidLogFormat, got %v", err)
 	}
 }

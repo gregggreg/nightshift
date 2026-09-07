@@ -134,7 +134,7 @@ func (s *Scheduler) SetCron(expr string) error {
 	parser := cron.NewParser(cron.Minute | cron.Hour | cron.Dom | cron.Month | cron.Dow)
 	_, err := parser.Parse(expr)
 	if err != nil {
-		return fmt.Errorf("%w: %v", ErrInvalidCron, err)
+		return fmt.Errorf("%w: %w", ErrInvalidCron, err)
 	}
 	s.mu.Lock()
 	s.cronExpr = expr
@@ -159,18 +159,18 @@ func (s *Scheduler) SetInterval(d time.Duration) error {
 func (s *Scheduler) SetWindow(cfg *config.WindowConfig) error {
 	start, err := ParseTimeOfDay(cfg.Start)
 	if err != nil {
-		return fmt.Errorf("%w: start: %v", ErrInvalidWindow, err)
+		return fmt.Errorf("%w: start: %w", ErrInvalidWindow, err)
 	}
 	end, err := ParseTimeOfDay(cfg.End)
 	if err != nil {
-		return fmt.Errorf("%w: end: %v", ErrInvalidWindow, err)
+		return fmt.Errorf("%w: end: %w", ErrInvalidWindow, err)
 	}
 
 	loc := time.Local
 	if cfg.Timezone != "" {
 		loc, err = time.LoadLocation(cfg.Timezone)
 		if err != nil {
-			return fmt.Errorf("%w: %v", ErrInvalidTimezone, err)
+			return fmt.Errorf("%w: %w", ErrInvalidTimezone, err)
 		}
 	}
 
@@ -329,7 +329,7 @@ func (s *Scheduler) NextRuns(n int) ([]time.Time, error) {
 		parser := cron.NewParser(cron.Minute | cron.Hour | cron.Dom | cron.Month | cron.Dow)
 		schedule, err := parser.Parse(cronExpr)
 		if err != nil {
-			return nil, fmt.Errorf("%w: %v", ErrInvalidCron, err)
+			return nil, fmt.Errorf("%w: %w", ErrInvalidCron, err)
 		}
 		current := now
 		for i := 0; i < n; i++ {

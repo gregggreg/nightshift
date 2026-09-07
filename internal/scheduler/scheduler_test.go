@@ -2,6 +2,7 @@ package scheduler
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sync/atomic"
 	"testing"
@@ -208,7 +209,7 @@ func TestNewFromConfig_NoSchedule(t *testing.T) {
 	cfg := &config.ScheduleConfig{}
 
 	_, err := NewFromConfig(cfg)
-	if err != ErrNoSchedule {
+	if !errors.Is(err, ErrNoSchedule) {
 		t.Errorf("NewFromConfig() error = %v, want %v", err, ErrNoSchedule)
 	}
 }
@@ -321,7 +322,7 @@ func TestScheduler_StartStop_Cron(t *testing.T) {
 	}
 
 	// Starting again should fail
-	if err := s.Start(ctx); err != ErrAlreadyRunning {
+	if err := s.Start(ctx); !errors.Is(err, ErrAlreadyRunning) {
 		t.Errorf("Start() twice error = %v, want %v", err, ErrAlreadyRunning)
 	}
 
@@ -334,7 +335,7 @@ func TestScheduler_StartStop_Cron(t *testing.T) {
 	}
 
 	// Stopping again should fail
-	if err := s.Stop(); err != ErrNotRunning {
+	if err := s.Stop(); !errors.Is(err, ErrNotRunning) {
 		t.Errorf("Stop() twice error = %v, want %v", err, ErrNotRunning)
 	}
 }
@@ -365,7 +366,7 @@ func TestScheduler_StartNoSchedule(t *testing.T) {
 	s := New()
 	ctx := context.Background()
 
-	if err := s.Start(ctx); err != ErrNoSchedule {
+	if err := s.Start(ctx); !errors.Is(err, ErrNoSchedule) {
 		t.Errorf("Start() error = %v, want %v", err, ErrNoSchedule)
 	}
 }

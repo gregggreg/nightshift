@@ -2,6 +2,7 @@ package commands
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -238,7 +239,7 @@ func runDaemonLoop(cfg *config.Config) error {
 	<-ctx.Done()
 
 	// Stop scheduler gracefully
-	if err := sched.Stop(); err != nil && err != scheduler.ErrNotRunning {
+	if err := sched.Stop(); err != nil && !errors.Is(err, scheduler.ErrNotRunning) {
 		log.Errorf("stopping scheduler: %v", err)
 	}
 

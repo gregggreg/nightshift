@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"encoding/json"
+	"errors"
 	"flag"
 	"fmt"
 	"io"
@@ -226,7 +227,7 @@ func collectCodex(root, repoFilter, originatorFilter string, minUserTurns int) (
 				}
 			}
 		}
-		if scanErr := scanner.Err(); scanErr != nil && scanErr != io.EOF {
+		if scanErr := scanner.Err(); scanErr != nil && !errors.Is(scanErr, io.EOF) {
 			return nil
 		}
 
@@ -349,7 +350,7 @@ func collectClaude(root, repoFilter string, minUserTurns int) ([]sessionMetrics,
 			primary += u.InputTokens + u.OutputTokens
 			alt += u.InputTokens + u.OutputTokens + u.CacheReadInputTokens + u.CacheCreationInputTokens
 		}
-		if scanErr := scanner.Err(); scanErr != nil && scanErr != io.EOF {
+		if scanErr := scanner.Err(); scanErr != nil && !errors.Is(scanErr, io.EOF) {
 			return nil
 		}
 

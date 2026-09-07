@@ -154,7 +154,7 @@ func TestClaudeAgent_Execute_Timeout(t *testing.T) {
 		Prompt: "long task",
 	})
 
-	if err != context.DeadlineExceeded {
+	if !errors.Is(err, context.DeadlineExceeded) {
 		t.Errorf("expected DeadlineExceeded, got %v", err)
 	}
 	if result.ExitCode != -1 {
@@ -179,7 +179,7 @@ func TestClaudeAgent_Execute_WithOptionsTimeout(t *testing.T) {
 		Timeout: 50 * time.Millisecond, // Short override
 	})
 
-	if err != context.DeadlineExceeded {
+	if !errors.Is(err, context.DeadlineExceeded) {
 		t.Errorf("expected DeadlineExceeded, got %v", err)
 	}
 	if result == nil {

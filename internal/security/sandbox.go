@@ -4,6 +4,7 @@ package security
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -132,7 +133,8 @@ func (s *Sandbox) Execute(ctx context.Context, name string, args ...string) (*Ex
 	}
 
 	if err != nil {
-		if exitErr, ok := err.(*exec.ExitError); ok {
+		var exitErr *exec.ExitError
+		if errors.As(err, &exitErr) {
 			result.ExitCode = exitErr.ExitCode()
 		} else {
 			result.Error = err.Error()
